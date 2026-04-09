@@ -1,13 +1,7 @@
-# EmojiPascal Token List (Draft for Approval)
+# EmojiPascal Token List
 
-This document defines the **proposed** token set for EmojiPascal (mini-Pascal scope).
-It is intentionally written as a **review/approval draft** so tokens can be adjusted before grammar and implementation.
-
-## Approval Status
-
-- Status: `DRAFT - NOT FINAL`
-- Goal: confirm token symbols before lexer/parser work
-- Note: identifiers and string literal content remain normal text
+This document defines the token set for EmojiPascal (mini-Pascal scope).
+Identifiers remain textual and string literal contents are preserved as written.
 
 ---
 
@@ -42,6 +36,7 @@ It is intentionally written as a **review/approval draft** so tokens can be adju
 
 | Token Name | Symbol | Description |
 |---|---|---|
+| `ASSIGN` | `⬅️` | Assignment (Pascal `:=` equivalent) |
 | `PLUS` | `➕` | Addition |
 | `MINUS` | `➖` | Subtraction |
 | `MUL` | `✖️` | Multiplication |
@@ -58,21 +53,16 @@ It is intentionally written as a **review/approval draft** so tokens can be adju
 
 ---
 
-## 4) Symbolic Operators and Delimiters as Emojis (proposal)
-
-This section is included because you requested that symbolic items like `:=`, `;`, `:` also have emoji forms.
+## 4) Symbolic Delimiters as Emojis
 
 | Token Name | Classic Pascal Symbol | Emoji Form (Proposed) | Description |
 |---|---|---|---|
-| `ASSIGN_SYM` | `:=` | `⬅️` | Assignment symbol alternative |
 | `SEMICOLON` | `;` | `🔹` | Statement separator |
 | `COLON` | `:` | `📍` | Type separator in declarations |
 | `COMMA` | `,` | `📎` | Identifier separator |
 | `DOT` | `.` | `🛑.` or `🏁.` | Program terminator marker (proposal) |
 | `LPAREN` | `(` | `🤜` | Left parenthesis (optional emoji mode) |
 | `RPAREN` | `)` | `🤛` | Right parenthesis (optional emoji mode) |
-
-> Recommendation: keep `(` `)` as text for readability and easier typing, but both variants are listed for discussion.
 
 ---
 
@@ -87,3 +77,5 @@ This section is included because you requested that symbolic items like `:=`, `;
 | `COMMENT` | `// note` | Single-line comment |
 | `WHITESPACE` | space/tab/newline | Ignored except for positions |
 | `EOF` | end-of-file | Internal lexer token |
+
+
