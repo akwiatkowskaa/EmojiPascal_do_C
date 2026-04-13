@@ -3,8 +3,8 @@ EmojiPascal – Transpiler języka opartego na Pascalu na język C
 ## Dane autorów
 * **Imię i Nazwisko:** Alicja Kwiatkowska 
   **E-mail:** kwiatkowskaa@student.agh.edu.pl
-* **Imię i Nazwisko:** Daw 
-  **E-mail:** [E-mail znajomego]
+* **Imię i Nazwisko:** Dawid Kałucki
+  **E-mail:** 
 
 ---
 
@@ -17,7 +17,7 @@ Celem projektu jest stworzenie narzędzia do translacji autorskiego języka opar
 Program jest **konwerterem (transpilerem)**, który dokonuje translacji kodu źródłowego wysokiego poziomu na inny kod źródłowy wysokiego poziomu.
 
 ### Planowany wynik działania programu
-Kompilator (transpiler) języka **EmojiPascal do kodu źródłowego języka C** (standard C99). Kod wynikowy będzie gotowy do bezpośredniej kompilacji przy użyciu kompilatora `gcc`.
+Kompilator (transpiler) języka **EmojiPascal do kodu źródłowego języka C**. Kod wynikowy będzie gotowy do bezpośredniej kompilacji przy użyciu kompilatora `gcc`.
 
 ### Planowany język implementacji
 * **Python 3.13** <!--?? -->
