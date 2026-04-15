@@ -87,6 +87,9 @@ Gramatyka zostanie zaimplementowana w notacji generatora **PLY**. Poniżej przed
                | <expression> ➗ <expression>
 
 <id> ::= IDENTIFIER
+```
+
+---
 
 ## Struktura projektu
 * `/src` – kod źródłowy transpilera (Lexer, Parser, Generator kodu).
