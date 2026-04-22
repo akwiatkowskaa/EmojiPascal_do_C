@@ -48,6 +48,38 @@ Pełna specyfikacja mapowania symboli Emoji na tokeny znajduje się w osobnym pl
 
 ---
 
+## Przykładowy program
+Program przyjmuje od użytkownika dwie liczby całkowite, znajduje ich najwiekszy wspólny dzielnik, a następnie wypisuje odpowiedź:
+
+
+```
+🏁 NajwiekszyWspolnyDzielnik 🔹
+
+📦
+    a 📍 🔢 🔹
+    b 📍 🔢 🔹
+    temp 📍 🔢 🔹
+
+🚦
+    🖨️ 🤜 "Podaj pierwsza liczbe: " 🤛 🔹
+    📥 🤜 a 🤛 🔹
+    🖨️ 🤜 "Podaj druga liczbe: " 🤛 🔹
+    📥 🤜 b 🤛 🔹
+
+    🔁 b ❌ 0️⃣ ▶️
+        🚦
+            temp ⬅️ b 🔹
+            b ⬅️ a ✂️ b 🔹
+            a ⬅️ temp 🔹
+        🛑 🔹
+
+    🖨️ 🤜 "Najwiekszy wspolny dzielnik to: " 🤛 🔹
+    🖨️ 🤜 a 🤛 🔹
+🛑 🔚
+```
+
+---
+
 ## Gramatyka formatu
 Gramatyka zostanie zaimplementowana w notacji generatora **PLY**. Poniżej przedstawiono wstępny zarys struktury języka w notacji zbliżonej do BNF:
 
