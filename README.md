@@ -52,7 +52,7 @@ Pełna specyfikacja mapowania symboli Emoji na tokeny znajduje się w osobnym pl
 Gramatyka zostanie zaimplementowana w notacji generatora **PLY**. Poniżej przedstawiono wstępny zarys struktury języka w notacji zbliżonej do BNF:
 
 ```bnf
-<program> ::= 🏁 <id> 🔹 <declarations> 🚦 <statements> 🛑 🔚
+<program> ::= 🏁 <id> 🔹 <declarations> <functions> 🚦 <statements> 🛑 🔚
 
 <declarations> ::= 📦 <decl_list> | ε
 
@@ -62,7 +62,15 @@ Gramatyka zostanie zaimplementowana w notacji generatora **PLY**. Poniżej przed
 
 <id_list> ::= <id> | <id> 📎 <id_list>
 
-<type> ::= 🔢 | 🧵 | ✅
+<type> ::= 🔢 | 🧵 | ✅ | 📚 🤜 <math_expr> 🤛 <type>
+
+<functions> ::= <func_decl> 🔹 <functions> | ε
+
+<func_decl> ::= ⚙️ <id> 🤜 <params> 🤛 📍 <type> 🚦 <statements> 🛑
+
+<params> ::= <param_list> | ε
+
+<param_list> ::= <id> 📍 <type> | <id> 📍 <type> 📎 <param_list>
 
 <statements> ::= <stmt> 🔹 <statements> | <stmt>
 
@@ -70,8 +78,14 @@ Gramatyka zostanie zaimplementowana w notacji generatora **PLY**. Poniżej przed
          | <if_stmt>
          | <while_stmt>
          | <print_stmt>
+         | <input_stmt>
+         | <return_stmt>
 
-<assign_stmt> ::= <id> ⬅️ <expression>
+<assign_stmt> ::= <var_ref> ⬅️ <expression>
+
+<input_stmt> ::= 📥 🤜 <var_ref> 🤛
+
+<return_stmt> ::= ↩️ <expression>
 
 <if_stmt> ::= ❓ <expression> ➡️ <stmt> [ 🙅 <stmt> ]
 
@@ -102,9 +116,19 @@ Gramatyka zostanie zaimplementowana w notacji generatora **PLY**. Poniżej przed
          | <term> ✖️ <factor>
          | <term> ➗ <factor>
 
-<factor> ::= <id>
+<factor> ::= <var_ref>
            | <literal>
+           | <func_call>
+           | <conversion>
            | 🤜 <expression> 🤛
+
+<var_ref> ::= <id> | <id> 🤜 <math_expr> 🤛
+
+<func_call> ::= <id> 🤜 <arg_list> 🤛
+
+<arg_list> ::= <expression> | <expression> 📎 <arg_list> | ε
+
+<conversion> ::= ✨ 🤜 <expression> 🤛 📍 <type>
 
 <literal> ::= LITERAL_INT
             | LITERAL_STR
