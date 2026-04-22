@@ -47,6 +47,7 @@ Ten dokument definiuje zestaw tokenów dla języka EmojiPascal (zakres mini-Pasc
 | `DIV` | `➗` | Dzielenie |
 | `EQ` | `🟰` | Równe |
 | `NEQ` | `❌` | Różne |
+| `MOD` | `✂️` | Reszta z dzielenia (Modulo) |
 | `LT` | `🔽` | Mniejsze niż |
 | `LE` | `⏬` | Mniejsze lub równe |
 | `GT` | `🔼` | Większe niż |

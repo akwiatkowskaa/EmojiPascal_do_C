@@ -115,6 +115,7 @@ Gramatyka zostanie zaimplementowana w notacji generatora **PLY**. Poniżej przed
 <term> ::= <factor>
          | <term> ✖️ <factor>
          | <term> ➗ <factor>
+         | <term> ✂️ <factor>
 
 <factor> ::= <var_ref>
            | <literal>
