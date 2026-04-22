@@ -4,20 +4,23 @@ Ten dokument definiuje zestaw tokenów dla języka EmojiPascal (zakres mini-Pasc
 
 ---
 
-## 1. Słowa kluczowe (emoji)
+## 1. Słowa kluczowe
 
 | Nazwa tokenu | Symbol | Opis |
 |:---|:---:|:---|
 | `PROGRAM` | `🏁` | Nagłówek i początek programu |
 | `VAR` | `📦` | Sekcja deklaracji zmiennych |
+| `FUNCTION` | `⚙️` | Definicja nowej funkcji (podprogramu) |
 | `BEGIN` | `🚦` | Początek bloku instrukcji |
 | `END` | `🛑` | Koniec bloku instrukcji |
+| `RETURN` | `↩️` | Zwrócenie wartości z funkcji |
 | `IF` | `❓` | Instrukcja warunkowa |
 | `THEN` | `➡️` | Początek gałęzi "prawda" |
 | `ELSE` | `🙅` | Początek gałęzi "fałsz" |
 | `WHILE` | `🔁` | Pętla warunkowa |
 | `DO` | `▶️` | Początek ciała pętli |
 | `PRINT` | `🖨️` | Wyświetlanie danych na wyjściu |
+| `INPUT` | `📥` | Pobieranie danych od użytkownika |
 
 ---
 
@@ -28,6 +31,7 @@ Ten dokument definiuje zestaw tokenów dla języka EmojiPascal (zakres mini-Pasc
 | `TYPE_INT` | `🔢` | Typ całkowity (Integer) |
 | `TYPE_STRING` | `🧵` | Typ tekstowy (String) |
 | `TYPE_BOOL` | `✅` | Typ logiczny (Boolean) |
+| `TYPE_ARRAY` | `📚` | Typ tablicowy (wymaga rozmiaru w nawiasach) |
 
 ---
 
@@ -36,6 +40,7 @@ Ten dokument definiuje zestaw tokenów dla języka EmojiPascal (zakres mini-Pasc
 | Nazwa tokenu | Symbol | Opis |
 |:---|:---:|:---|
 | `ASSIGN` | `⬅️` | Przypisanie (odpowiednik `:=`) |
+| `CAST` | `✨` | Magiczna konwersja typu (rzutowanie) |
 | `PLUS` | `➕` | Dodawanie |
 | `MINUS` | `➖` | Odejmowanie |
 | `MUL` | `✖️` | Mnożenie |
@@ -59,19 +64,19 @@ Ten dokument definiuje zestaw tokenów dla języka EmojiPascal (zakres mini-Pasc
 | `SEMICOLON` | `;` | `🔹` | Separator instrukcji |
 | `COLON` | `:` | `📍` | Separator typu w deklaracjach |
 | `COMMA` | `,` | `📎` | Separator identyfikatorów |
-| `DOT` | `.` | `🔚` | Znak końca programu |
-| `LPAREN` | `(` | `🤜` | Nawias lewy |
-| `RPAREN` | `)` | `🤛` | Nawias prawy |
+| `DOT` | `.` | `🔚` | Znak końca programu / EOF |
+| `LPAREN` | `(` | `🤜` | Nawias lewy / Indeksowanie tablic |
+| `RPAREN` | `)` | `🤛` | Nawias prawy / Indeksowanie tablic |
 
 ---
 
 ## 5. Tokeny leksykalne i literały
 
-W EmojiPascal literały liczbowe składają się z sekwencji cyfr w ramkach. Nazwy zmiennych oraz teksty pozostają w formie standardowej dla zapewnienia unikalności identyfikatorów.
+W EmojiPascal literały liczbowe składają się z sekwencji cyfr w ramkach. Nazwy zmiennych oraz teksty pozostają w formie tekstowej dla zapewnienia unikalności identyfikatorów.
 
 | Kategoria | Format / Przykład | Opis |
 |:---|:---|:---|
-| `LITERAL_INT` | `0️⃣` do `9️⃣` | Cyfry emoji (np. `4️⃣``2️⃣` dla liczby 42) |
+| `LITERAL_INT` | `0️⃣` do `9️⃣` | Cyfry emoji (np. `4️⃣2️⃣` dla liczby 42) |
 | `IDENTIFIER` | `x`, `suma_1` | Alfanumeryczne nazwy zmiennych |
 | `LITERAL_STR` | `"Tekst"` | Napisy ujęte w cudzysłów |
 | `LITERAL_BOOL` | `true`, `false` | Stałe logiczne |
