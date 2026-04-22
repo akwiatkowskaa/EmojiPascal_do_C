@@ -52,7 +52,7 @@ Pełna specyfikacja mapowania symboli Emoji na tokeny znajduje się w osobnym pl
 Gramatyka zostanie zaimplementowana w notacji generatora **PLY**. Poniżej przedstawiono wstępny zarys struktury języka w notacji zbliżonej do BNF:
 
 ```bnf
-<program> ::= 🏁 <id> 🔹 <declarations> 🚦 <statements> 🛑
+<program> ::= 🏁 <id> 🔹 <declarations> 🚦 <statements> 🛑 🔚
 
 <declarations> ::= 📦 <decl_list> | ε
 
@@ -77,14 +77,38 @@ Gramatyka zostanie zaimplementowana w notacji generatora **PLY**. Poniżej przed
 
 <while_stmt> ::= 🔁 <expression> ▶️ <stmt>
 
-<print_stmt> ::= 🖨️ ( <expression> )
+<print_stmt> ::= 🖨️ 🤜 <expression> 🤛
 
-<expression> ::= <id>
-               | NUMBER
-               | <expression> ➕ <expression>
-               | <expression> ➖ <expression>
-               | <expression> ✖️ <expression>
-               | <expression> ➗ <expression>
+<expression> ::= <logic_expr>
+
+<logic_expr> ::= <rel_expr>
+               | <logic_expr> 🤝 <rel_expr>
+               | <logic_expr> 🔀 <rel_expr>
+               | 🚫 <rel_expr>
+
+<rel_expr> ::= <math_expr>
+             | <math_expr> 🟰 <math_expr>
+             | <math_expr> ❌ <math_expr>
+             | <math_expr> 🔽 <math_expr>
+             | <math_expr> ⏬ <math_expr>
+             | <math_expr> 🔼 <math_expr>
+             | <math_expr> ⏫ <math_expr>
+
+<math_expr> ::= <term>
+              | <math_expr> ➕ <term>
+              | <math_expr> ➖ <term>
+
+<term> ::= <factor>
+         | <term> ✖️ <factor>
+         | <term> ➗ <factor>
+
+<factor> ::= <id>
+           | <literal>
+           | 🤜 <expression> 🤛
+
+<literal> ::= LITERAL_INT
+            | LITERAL_STR
+            | LITERAL_BOOL
 
 <id> ::= IDENTIFIER
 ```
