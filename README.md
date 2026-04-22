@@ -4,7 +4,7 @@ EmojiPascal – Transpiler języka opartego na Pascalu na język C
 * **Imię i Nazwisko:** Alicja Kwiatkowska 
   **E-mail:** kwiatkowskaa@student.agh.edu.pl
 * **Imię i Nazwisko:** Dawid Kałucki
-  **E-mail:** 
+  **E-mail:** dkalucki@student.agh.edu.pl
 
 ---
 
