@@ -1,0 +1,23 @@
+🏁 NajwiekszyWspolnyDzielnik 🔹
+
+📦
+    a 📍 🔢 🔹
+    b 📍 🔢 🔹
+    temp 📍 🔢 🔹
+
+🚦
+    🖨️ 🤜 "Podaj pierwsza liczbe: " 🤛 🔹
+    📥 🤜 a 🤛 🔹
+    🖨️ 🤜 "Podaj druga liczbe: " 🤛 🔹
+    📥 🤜 b 🤛 🔹
+
+    🔁 b ❌ 0️⃣ ▶️
+        🚦
+            temp ⬅️ b 🔹
+            b ⬅️ a ✂️ b 🔹
+            a ⬅️ temp 🔹
+        🛑 🔹
+
+    🖨️ 🤜 "Najwiekszy wspolny dzielnik to: " 🤛 🔹
+    🖨️ 🤜 a 🤛 🔹
+🛑 🔚

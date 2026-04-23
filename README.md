@@ -49,10 +49,14 @@ Pełna specyfikacja mapowania symboli Emoji na tokeny znajduje się w osobnym pl
 ---
 
 ## Przykładowy program
-Program przyjmuje od użytkownika dwie liczby całkowite, znajduje ich najwiekszy wspólny dzielnik, a następnie wypisuje odpowiedź:
 
+Poniżej przedstawiono przykładowy program w języku **EmojiPascal** zapisany w pliku o rozszerzeniu `.ep`.
 
-```
+📄 **Plik:** `najwiekszy_wspolny_dzielnik.ep`
+
+Program przyjmuje od użytkownika dwie liczby całkowite, znajduje ich największy wspólny dzielnik, a następnie wypisuje wynik:
+
+```ep
 🏁 NajwiekszyWspolnyDzielnik 🔹
 
 📦
