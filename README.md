@@ -85,91 +85,147 @@ Program przyjmuje od użytkownika dwie liczby całkowite, znajduje ich najwięks
 ---
 
 ## Gramatyka formatu
-Gramatyka zostanie zaimplementowana w notacji generatora **PLY**. Poniżej przedstawiono wstępny zarys struktury języka w notacji zbliżonej do BNF:
+Gramatyka zostanie zaimplementowana w notacji generatora **PLY**. Ponizej znajduje sie docelowa wersja mini-EmojiPascal z podzialem tematycznym (parser, deklaracje, instrukcje, wyrazenia), wzorowana na klasycznym Pascalu.
 
 ```bnf
-<program> ::= 🏁 <id> 🔹 <declarations> <functions> 🚦 <statements> 🛑 🔚
+// ==========================================
+// PARSER - STRUKTURA PROGRAMU
+// ==========================================
+<program> ::= 🏁 <id> 🔹 <block> 🔚
 
-<declarations> ::= 📦 <decl_list> | ε
+<block> ::= <const_section_opt> <var_section_opt> <subprogram_decls_opt> 🚦 <stmt_list_opt> 🛑
 
-<decl_list> ::= <decl> 🔹 <decl_list> | <decl>
+// ==========================================
+// DEKLARACJE
+// ==========================================
+<const_section_opt> ::= <const_section> | ε
+<const_section> ::= 📌 <const_decl_list>
+<const_decl_list> ::= <const_decl> 🔹 <const_decl_list> | <const_decl> 🔹
+<const_decl> ::= <id> 🟰 <const_value>
 
-<decl> ::= <id_list> 📍 <type>
+<var_section_opt> ::= <var_section> | ε
+<var_section> ::= 📦 <var_decl_list>
+<var_decl_list> ::= <var_decl> 🔹 <var_decl_list> | <var_decl> 🔹
+<var_decl> ::= <id_list> 📍 <type>
 
 <id_list> ::= <id> | <id> 📎 <id_list>
 
-<type> ::= 🔢 | 🧵 | ✅ | 📚 🤜 <math_expr> 🤛 <type>
+// --- typy proste i zlozone ---
+<type> ::= 🔢 | 🧵 | ✅ | 🔡
+         | 📚 🤜 <const_int> ↔️ <const_int> 🤛 🧾 <type>
+         | 🧱 🚦 <field_decl_list> 🛑
 
-<functions> ::= <func_decl> 🔹 <functions> | ε
+<field_decl_list> ::= <field_decl> 🔹 <field_decl_list> | <field_decl> 🔹
+<field_decl> ::= <id_list> 📍 <type>
 
-<func_decl> ::= ⚙️ <id> 🤜 <params> 🤛 📍 <type> 🚦 <statements> 🛑
+// ==========================================
+// PODPROGRAMY
+// ==========================================
+<subprogram_decls_opt> ::= <subprogram_decls> | ε
+<subprogram_decls> ::= <subprogram_decl> 🔹 <subprogram_decls> | <subprogram_decl> 🔹
+<subprogram_decl> ::= <function_decl> | <procedure_decl>
 
-<params> ::= <param_list> | ε
+<function_decl> ::= ⚙️ <id> <formal_params_opt> 📍 <type> 🔹 <block>
+<procedure_decl> ::= 🔧 <id> <formal_params_opt> 🔹 <block>
 
-<param_list> ::= <id> 📍 <type> | <id> 📍 <type> 📎 <param_list>
+<formal_params_opt> ::= <formal_params> | ε
+<formal_params> ::= 🤜 <formal_param_list> 🤛
+<formal_param_list> ::= <formal_param_group>
+                      | <formal_param_group> 🔹 <formal_param_list>
+<formal_param_group> ::= <byref_opt> <id_list> 📍 <type>
+<byref_opt> ::= 📤 | ε
 
-<statements> ::= <stmt> 🔹 <statements> | <stmt>
+// ==========================================
+// INSTRUKCJE
+// ==========================================
+<stmt_list_opt> ::= <stmt_list> | ε
+<stmt_list> ::= <stmt> | <stmt> 🔹 <stmt_list>
 
 <stmt> ::= <assign_stmt>
+         | <proc_call_stmt>
          | <if_stmt>
          | <while_stmt>
+         | <repeat_stmt>
+         | <for_stmt>
+         | <case_stmt>
+         | <compound_stmt>
          | <print_stmt>
          | <input_stmt>
-         | <return_stmt>
+         | <return_stmt_opt>
+         | ε
 
-<assign_stmt> ::= <var_ref> ⬅️ <expression>
+// --- instrukcje proste i zlozone ---
+<compound_stmt> ::= 🚦 <stmt_list_opt> 🛑
+
+<assign_stmt> ::= <var_ref> ⬅️ <expr>
+<proc_call_stmt> ::= <id> <actual_params_opt>
+<actual_params_opt> ::= <actual_params> | ε
+<actual_params> ::= 🤜 <expr_list_opt> 🤛
+<expr_list_opt> ::= <expr_list> | ε
+<expr_list> ::= <expr> | <expr> 📎 <expr_list>
 
 <input_stmt> ::= 📥 🤜 <var_ref> 🤛
+<print_stmt> ::= 🖨️ 🤜 <expr_list_opt> 🤛
+<return_stmt_opt> ::= ↩️ <expr> | ↩️
 
-<return_stmt> ::= ↩️ <expression>
+// --- instrukcje sterujace ---
+<if_stmt> ::= ❓ <expr> ➡️ <stmt> <else_opt>
+<else_opt> ::= 🙅 <stmt> | ε
 
-<if_stmt> ::= ❓ <expression> ➡️ <stmt> [ 🙅 <stmt> ]
+<while_stmt> ::= 🔁 <expr> ▶️ <stmt>
+<repeat_stmt> ::= 🔁🔂 <stmt_list> 🔂▶️ <expr>
 
-<while_stmt> ::= 🔁 <expression> ▶️ <stmt>
+<for_stmt> ::= 🔂 <id> ⬅️ <expr> ⬆️ <expr> ▶️ <stmt>
+             | 🔂 <id> ⬅️ <expr> ⬇️ <expr> ▶️ <stmt>
 
-<print_stmt> ::= 🖨️ 🤜 <expression> 🤛
+<case_stmt> ::= 🧭 <expr> 🧾 <case_arm_list> <else_opt_case> 🛑
+<case_arm_list> ::= <case_arm> | <case_arm> <case_arm_list>
+<case_arm> ::= <const_list> ➡️ <stmt> 🔹
+<const_list> ::= <const_value> | <const_value> 📎 <const_list>
+<else_opt_case> ::= 🙅 <stmt> 🔹 | ε
 
-<expression> ::= <logic_expr>
+// ==========================================
+// WYRAZENIA (PRIORYTETY)
+// ==========================================
+<expr> ::= <or_expr>
+<or_expr> ::= <and_expr> | <or_expr> 🔀 <and_expr>
+<and_expr> ::= <rel_expr> | <and_expr> 🤝 <rel_expr>
+<rel_expr> ::= <add_expr>
+             | <add_expr> <rel_op> <add_expr>
+<rel_op> ::= 🟰 | ❌ | 🔽 | ⏬ | 🔼 | ⏫
 
-<logic_expr> ::= <rel_expr>
-               | <logic_expr> 🤝 <rel_expr>
-               | <logic_expr> 🔀 <rel_expr>
-               | 🚫 <rel_expr>
+<add_expr> ::= <mul_expr>
+             | <add_expr> ➕ <mul_expr>
+             | <add_expr> ➖ <mul_expr>
 
-<rel_expr> ::= <math_expr>
-             | <math_expr> 🟰 <math_expr>
-             | <math_expr> ❌ <math_expr>
-             | <math_expr> 🔽 <math_expr>
-             | <math_expr> ⏬ <math_expr>
-             | <math_expr> 🔼 <math_expr>
-             | <math_expr> ⏫ <math_expr>
+<mul_expr> ::= <unary_expr>
+             | <mul_expr> ✖️ <unary_expr>
+             | <mul_expr> ➗ <unary_expr>
+             | <mul_expr> ✂️ <unary_expr>
 
-<math_expr> ::= <term>
-              | <math_expr> ➕ <term>
-              | <math_expr> ➖ <term>
+<unary_expr> ::= <postfix_expr>
+               | 🚫 <unary_expr>
+               | ➕ <unary_expr>
+               | ➖ <unary_expr>
 
-<term> ::= <factor>
-         | <term> ✖️ <factor>
-         | <term> ➗ <factor>
-         | <term> ✂️ <factor>
+<postfix_expr> ::= <primary_expr>
+                 | <postfix_expr> 🤜 <expr> 🤛
 
-<factor> ::= <var_ref>
-           | <literal>
-           | <func_call>
-           | <conversion>
-           | 🤜 <expression> 🤛
+<primary_expr> ::= <var_ref>
+                 | <literal>
+                 | <func_call>
+                 | <conversion>
+                 | 🤜 <expr> 🤛
 
-<var_ref> ::= <id> | <id> 🤜 <math_expr> 🤛
+<var_ref> ::= <id>
+            | <var_ref> 🤜 <expr> 🤛
+            | <var_ref> 💠 <id>
+<func_call> ::= <id> <actual_params>
+<conversion> ::= ✨ 🤜 <expr> 🤛 📍 <type>
 
-<func_call> ::= <id> 🤜 <arg_list> 🤛
-
-<arg_list> ::= <expression> | <expression> 📎 <arg_list> | ε
-
-<conversion> ::= ✨ 🤜 <expression> 🤛 📍 <type>
-
-<literal> ::= LITERAL_INT
-            | LITERAL_STR
-            | LITERAL_BOOL
+<literal> ::= LITERAL_INT | LITERAL_REAL | LITERAL_STR | LITERAL_BOOL | LITERAL_CHAR
+<const_value> ::= LITERAL_INT | LITERAL_REAL | LITERAL_STR | LITERAL_BOOL | LITERAL_CHAR
+<const_int> ::= LITERAL_INT
 
 <id> ::= IDENTIFIER
 ```
