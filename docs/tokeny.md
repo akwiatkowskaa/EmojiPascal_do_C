@@ -1,6 +1,6 @@
 # Dokumentacja Tokenów EmojiPascal
 
-Ten dokument definiuje zestaw tokenow dla jezyka EmojiPascal (zakres mini-Pascal). Nazwy wlasne (zmienne) oraz napisy w cudzyslowach pozostaja w formie tekstowej.
+Ten dokument definiuje zestaw tokenow dla jezyka EmojiPascal. Nazwy wlasne (zmienne) oraz napisy w cudzyslowach pozostaja w formie tekstowej.
 
 ---
 
@@ -131,7 +131,7 @@ W EmojiPascal literały liczbowe składają się z sekwencji cyfr w ramkach. Naz
 - Funkcje i procedury moga miec pusta liste parametrow.
 - `case` i `repeat-until` sa przewidziane jako elementy etapu rozszerzonego.
 
-## 7. Minimalny zakres wdrozenia (MVP)
+## 7. Minimalny zakres wdrozenia 
 
 1. Tokeny podstawowe: deklaracje, przypisanie, wyrazenia, `if`, `while`, `for`, funkcja/procedura.
 2. Typy podstawowe: `int`, `real`, `bool`, `string`.

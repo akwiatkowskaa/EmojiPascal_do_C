@@ -85,7 +85,7 @@ Program przyjmuje od użytkownika dwie liczby całkowite, znajduje ich najwięks
 ---
 
 ## Gramatyka formatu
-Gramatyka zostanie zaimplementowana w notacji generatora **PLY**. Ponizej znajduje sie docelowa wersja mini-EmojiPascal z podzialem tematycznym (parser, deklaracje, instrukcje, wyrazenia), wzorowana na klasycznym Pascalu.
+Gramatyka zostanie zaimplementowana w notacji generatora **PLY**. Ponizej znajduje sie docelowa wersja EmojiPascal z podzialem tematycznym (parser, deklaracje, instrukcje, wyrazenia), wzorowana na klasycznym Pascalu.
 
 ```bnf
 // ==========================================
@@ -110,13 +110,15 @@ Gramatyka zostanie zaimplementowana w notacji generatora **PLY**. Ponizej znajdu
 
 <id_list> ::= <id> | <id> 📎 <id_list>
 
-// --- typy proste i zlozone ---
-<type> ::= 🔢 | 🧵 | ✅ | 🔡
+
+// --- typy ---
+<type> ::= 🔢 | 🌊 | 🧵 | ✅ | 🔡
          | 📚 🤜 <const_int> ↔️ <const_int> 🤛 🧾 <type>
          | 🧱 🚦 <field_decl_list> 🛑
 
 <field_decl_list> ::= <field_decl> 🔹 <field_decl_list> | <field_decl> 🔹
 <field_decl> ::= <id_list> 📍 <type>
+
 
 // ==========================================
 // PODPROGRAMY
@@ -132,6 +134,7 @@ Gramatyka zostanie zaimplementowana w notacji generatora **PLY**. Ponizej znajdu
 <formal_params> ::= 🤜 <formal_param_list> 🤛
 <formal_param_list> ::= <formal_param_group>
                       | <formal_param_group> 🔹 <formal_param_list>
+
 <formal_param_group> ::= <byref_opt> <id_list> 📍 <type>
 <byref_opt> ::= 📤 | ε
 
@@ -152,15 +155,15 @@ Gramatyka zostanie zaimplementowana w notacji generatora **PLY**. Ponizej znajdu
          | <print_stmt>
          | <input_stmt>
          | <return_stmt_opt>
-         | ε
 
-// --- instrukcje proste i zlozone ---
+
 <compound_stmt> ::= 🚦 <stmt_list_opt> 🛑
 
 <assign_stmt> ::= <var_ref> ⬅️ <expr>
-<proc_call_stmt> ::= <id> <actual_params_opt>
-<actual_params_opt> ::= <actual_params> | ε
-<actual_params> ::= 🤜 <expr_list_opt> 🤛
+
+<proc_call_stmt> ::= <id>
+                   | <id> 🤜 <expr_list_opt> 🤛
+
 <expr_list_opt> ::= <expr_list> | ε
 <expr_list> ::= <expr> | <expr> 📎 <expr_list>
 
@@ -168,15 +171,19 @@ Gramatyka zostanie zaimplementowana w notacji generatora **PLY**. Ponizej znajdu
 <print_stmt> ::= 🖨️ 🤜 <expr_list_opt> 🤛
 <return_stmt_opt> ::= ↩️ <expr> | ↩️
 
-// --- instrukcje sterujace ---
-<if_stmt> ::= ❓ <expr> ➡️ <stmt> <else_opt>
+
+// ==========================================
+// STEROWANIE
+// ==========================================
+<if_stmt> ::= ❓ <bool_expr> ➡️ <stmt> <else_opt>
 <else_opt> ::= 🙅 <stmt> | ε
 
-<while_stmt> ::= 🔁 <expr> ▶️ <stmt>
-<repeat_stmt> ::= 🔁🔂 <stmt_list> 🔂▶️ <expr>
+<while_stmt> ::= 🔁 <bool_expr> ▶️ <stmt>
 
-<for_stmt> ::= 🔂 <id> ⬅️ <expr> ⬆️ <expr> ▶️ <stmt>
-             | 🔂 <id> ⬅️ <expr> ⬇️ <expr> ▶️ <stmt>
+<repeat_stmt> ::= 🔁🔂 <stmt_list> 🔂▶️ <bool_expr>
+
+<for_stmt> ::= 🔂 <id> ⬅️ <math_expr> ⬆️ <math_expr> ▶️ <stmt>
+             | 🔂 <id> ⬅️ <math_expr> ⬇️ <math_expr> ▶️ <stmt>
 
 <case_stmt> ::= 🧭 <expr> 🧾 <case_arm_list> <else_opt_case> 🛑
 <case_arm_list> ::= <case_arm> | <case_arm> <case_arm_list>
@@ -184,47 +191,75 @@ Gramatyka zostanie zaimplementowana w notacji generatora **PLY**. Ponizej znajdu
 <const_list> ::= <const_value> | <const_value> 📎 <const_list>
 <else_opt_case> ::= 🙅 <stmt> 🔹 | ε
 
+
 // ==========================================
-// WYRAZENIA (PRIORYTETY)
+// WYRAŻENIA LOGICZNE
 // ==========================================
-<expr> ::= <or_expr>
-<or_expr> ::= <and_expr> | <or_expr> 🔀 <and_expr>
-<and_expr> ::= <rel_expr> | <and_expr> 🤝 <rel_expr>
-<rel_expr> ::= <add_expr>
-             | <add_expr> <rel_op> <add_expr>
+<bool_expr> ::= <bool_expr> 🔀 <bool_term>
+              | <bool_term>
+
+<bool_term> ::= <bool_term> 🤝 <bool_factor>
+              | <bool_factor>
+
+<bool_factor> ::= 🚫 <bool_factor>
+                | <bool_primary>
+
+<bool_primary> ::= <rel_expr>
+                 | <var_ref>
+                 | <func_call>
+                 | LITERAL_BOOL
+                 | 🤜 <bool_expr> 🤛
+
+
+// ==========================================
+// RELACJE
+// ==========================================
+<rel_expr> ::= <math_expr> <rel_op> <math_expr>
 <rel_op> ::= 🟰 | ❌ | 🔽 | ⏬ | 🔼 | ⏫
 
-<add_expr> ::= <mul_expr>
-             | <add_expr> ➕ <mul_expr>
-             | <add_expr> ➖ <mul_expr>
 
-<mul_expr> ::= <unary_expr>
-             | <mul_expr> ✖️ <unary_expr>
-             | <mul_expr> ➗ <unary_expr>
-             | <mul_expr> ✂️ <unary_expr>
+// ==========================================
+// WYRAŻENIA MATEMATYCZNE
+// ==========================================
+<math_expr> ::= <math_expr> ➕ <math_term>
+              | <math_expr> ➖ <math_term>
+              | <math_term>
 
-<unary_expr> ::= <postfix_expr>
-               | 🚫 <unary_expr>
-               | ➕ <unary_expr>
-               | ➖ <unary_expr>
+<math_term> ::= <math_term> ✖️ <math_factor>
+              | <math_term> ➗ <math_factor>
+              | <math_term> ✂️ <math_factor>
+              | <math_factor>
 
-<postfix_expr> ::= <primary_expr>
-                 | <postfix_expr> 🤜 <expr> 🤛
+<math_factor> ::= ➕ <math_factor>
+                | ➖ <math_factor>
+                | <math_primary>
 
-<primary_expr> ::= <var_ref>
-                 | <literal>
+<math_primary> ::= LITERAL_INT
+                 | LITERAL_REAL
+                 | <var_ref>
                  | <func_call>
                  | <conversion>
-                 | 🤜 <expr> 🤛
+                 | 🤜 <math_expr> 🤛
+
+
+// ==========================================
+// POZOSTAŁE
+// ==========================================
+<func_call> ::= <id> 🤜 <expr_list_opt> 🤛
 
 <var_ref> ::= <id>
-            | <var_ref> 🤜 <expr> 🤛
+            | <var_ref> 🤜 <math_expr> 🤛
             | <var_ref> 💠 <id>
-<func_call> ::= <id> <actual_params>
+
 <conversion> ::= ✨ 🤜 <expr> 🤛 📍 <type>
 
+<expr> ::= <bool_expr>
+         | <math_expr>
+         | LITERAL_STR
+         | LITERAL_CHAR
+
 <literal> ::= LITERAL_INT | LITERAL_REAL | LITERAL_STR | LITERAL_BOOL | LITERAL_CHAR
-<const_value> ::= LITERAL_INT | LITERAL_REAL | LITERAL_STR | LITERAL_BOOL | LITERAL_CHAR
+<const_value> ::= <literal>
 <const_int> ::= LITERAL_INT
 
 <id> ::= IDENTIFIER
