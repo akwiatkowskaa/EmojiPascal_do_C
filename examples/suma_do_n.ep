@@ -1,0 +1,19 @@
+🏁 SumaDoN 🔹
+
+📦
+    n 📍 🔢 🔹
+    i 📍 🔢 🔹
+    suma 📍 🔢 🔹
+
+🚦
+    🖨️ 🤜 "Podaj n: " 🤛 🔹
+    📥 🤜 n 🤛 🔹
+
+    suma ⬅️ 0️⃣ 🔹
+
+    🔂 i ⬅️ 1️⃣ ⬆️ n ▶️
+        suma ⬅️ suma ➕ i 🔹
+
+    🖨️ 🤜 "Suma od 1 do n: " 🤛 🔹
+    🖨️ 🤜 suma 🤛 🔹
+🛑 🔚
