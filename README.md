@@ -31,7 +31,7 @@ Instalacja zależności Pythona dla narzędzi w `src/`:
 pip install -r requirements.txt
 ```
 
-W pliku [`requirements.txt`](./requirements.txt) wymienione są pakiety zewnętrzne projektu (na dziś wyłącznie **PLY**). Przy dalszej pracy (np. testy automatyczne, dodatkowe biblioteki) dopisuje się tu kolejne wiersze — współautor, prowadzący lub CI mogą wtedy zainstalować **tę samą** listę jednym poleceniem. Minimalnie wystarczy też `pip install ply`, lecz **zalecane** jest korzystanie z `requirements.txt`.
+W pliku [`requirements.txt`](./requirements.txt) wymienione są pakiety zewnętrzne projektu. 
 
 ### Sposób realizacji skanera i parsera
 W projekcie wykorzystywana jest biblioteka **PLY (Python Lex-Yacc)** — narzędzie implementujące mechanizmy analogiczne do Lex i Yacc w języku Python, umożliwiające formalne zdefiniowanie tokenów oraz reguł gramatyki.
