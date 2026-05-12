@@ -14,29 +14,72 @@ EmojiPascal – Transpiler języka opartego na Pascalu na język C
 Celem projektu jest stworzenie narzędzia do translacji autorskiego języka opartego na składni Pascala, o nazwie **EmojiPascal**, w którym standardowe słowa kluczowe zostały zastąpione odpowiednimi symbolami Emoji. Projekt skupia się na praktycznej implementacji pełnego procesu konwersji: od odczytania znaków Emoji, przez analizę struktury programu, aż po wygenerowanie gotowego kodu w języku C.
 
 ### Rodzaj translatora
-Program jest **konwerterem (transpilerem)**, który dokonuje translacji kodu źródłowego wysokiego poziomu na inny kod źródłowy wysokiego poziomu.
+Program jest **transpilerem** — dokonuje translacji kodu źródłowego w języku **EmojiPascal** na **kod źródłowy w języku C** (język implementacji narzędzia to Python, co opisano poniżej).
 
 ### Planowany wynik działania programu
-Kompilator (transpiler) języka **EmojiPascal do kodu źródłowego języka C**. Kod wynikowy będzie gotowy do bezpośredniej kompilacji przy użyciu kompilatora `gcc`.
+Docelowym wynikiem prac jest **transpiler** języka EmojiPascal do **kodu źródłowego w języku C**, gotowego do kompilacji przy użyciu kompilatora `gcc`.
 
-### Planowany język implementacji
-* **Python 3.10+** <!--?? -->
+**Stan realizacji (bieżący etap):** zaimplementowano **analizę leksykalną** oraz **analizę składniową** z budową **drzewa składniowego (AST)**. **Generator kodu C** z AST pozostaje do wykonania. Dostępny jest ponadto **skrypt pomocniczy** `emoji_to_pascal.py`, który zamienia symbole emoji na odpowiedniki leksykalne w konwencji Pascala i zapisuje plik `.pas` — jest to **podstawienie tekstowe**, a nie pełna transpilacja semantyczna.
 
-### Sposób realizacji skanera/parsera
-Do realizacji analizy leksykalnej i składniowej zostanie wykorzystana biblioteka:
+### Język implementacji i środowisko
+* **Python:** wersja **3.10 lub nowsza** (zalecana aktualna stabilna wersja interpretera).
+* **Biblioteka PLY** (Python Lex–Yacc) — generator analizatorów leksykalnych i składniowych w oparciu o tablice **LALR**.
 
-* **PLY (Python Lex-Yacc)** – narzędzie implementujące mechanizmy znane z Lex i Yacc w języku Python, umożliwiające definiowanie tokenów oraz gramatyki w sposób formalny (LALR).
+Instalacja zależności Pythona dla narzędzi w `src/`:
 
-Biblioteka pozwala na:
+```bash
+pip install -r requirements.txt
+```
+
+W pliku [`requirements.txt`](./requirements.txt) wymienione są pakiety zewnętrzne projektu (na dziś wyłącznie **PLY**). Przy dalszej pracy (np. testy automatyczne, dodatkowe biblioteki) dopisuje się tu kolejne wiersze — współautor, prowadzący lub CI mogą wtedy zainstalować **tę samą** listę jednym poleceniem. Minimalnie wystarczy też `pip install ply`, lecz **zalecane** jest korzystanie z `requirements.txt`.
+
+### Sposób realizacji skanera i parsera
+W projekcie wykorzystywana jest biblioteka **PLY (Python Lex-Yacc)** — narzędzie implementujące mechanizmy analogiczne do Lex i Yacc w języku Python, umożliwiające formalne zdefiniowanie tokenów oraz reguł gramatyki.
+
+PLY umożliwia w szczególności:
 - implementację analizatora leksykalnego (lexer),
 - implementację analizatora składniowego (parser),
 - obsługę znaków Unicode (w tym emoji).
 
 ---
 
+## Uruchomienie narzędzi
+
+Polecenia wywołuj z **katalogu głównego repozytorium** (tam, gdzie leżą m.in. `src/` i `examples/`). Ścieżkę do pliku `.ep` podaj względem tego katalogu (np. `examples/test.ep`).
+
+Interpreter Pythona **sam dodaje** do ścieżki importów folder zawierający uruchamiany skrypt — w przypadku `python3 src/main.py` jest to katalog `src/`, więc importy `lexer` i `parser` działają **bez** ustawiania `PYTHONPATH`.
+
+### Analiza leksykalna (lista tokenów)
+Wynik trafia na **standardowe wyjście** (`stdout`). **Nie** jest tworzony żaden plik wyjściowy.
+
+```bash
+python3 src/main.py ścieżka/do/programu.ep
+```
+
+### Analiza składniowa (AST, tryb diagnostyczny)
+Po poprawnym sparsowaniu program wypisuje **drzewo składniowe** w postaci czytelnej dla człowieka. Wynik trafia na **stdout**; program **nie** zapisuje AST do pliku automatycznie.
+
+```bash
+python3 src/main.py --parse ścieżka/do/programu.ep
+```
+
+Przykładowe programy: katalog [`examples/`](./examples/) (m.in. `test.ep`, `suma_do_n.ep`).
+
+### Eksport do pliku `.pas` (zamiana emoji na słowa kluczowe Pascala)
+Skrypt wykonuje **mapowanie symboli** zgodnie z definicjami w `src/emoji_language.py`. Nie korzysta z AST.
+
+```bash
+python3 src/emoji_to_pascal.py ścieżka/do/programu.ep
+```
+
+* **Domyślna lokalizacja zapisu:** `output/pascal/<nazwa_pliku_bez_rozszerzenia>.pas` (podkatalog jest tworzony w razie potrzeby).
+* **Jawna ścieżka wyjściowa:** `python3 src/emoji_to_pascal.py wejście.ep ścieżka/wyjście.pas`
+
+
+---
+
 ## Opis tokenów
-Pełna specyfikacja mapowania symboli Emoji na tokeny znajduje się w osobnym pliku dokumentacji:  
-👉 [Dokumentacja Tokenów](./docs/tokeny.md)
+Pełna specyfikacja mapowania symboli Emoji na tokeny znajduje się w osobnym pliku dokumentacji: [Dokumentacja tokenów](./docs/tokeny.md).
 
 ### Przykładowe mapowania:
 | Słowo kluczowe | Emoji | Opis |
@@ -85,7 +128,7 @@ Program przyjmuje od użytkownika dwie liczby całkowite, znajduje ich najwięks
 ---
 
 ## Gramatyka formatu
-Gramatyka zostanie zaimplementowana w notacji generatora **PLY**. Ponizej znajduje sie docelowa wersja EmojiPascal z podzialem tematycznym (parser, deklaracje, instrukcje, wyrazenia), wzorowana na klasycznym Pascalu.
+Poniżej zestawiono **docelową** specyfikację składni w notacji zbliżonej do **BNF**, wzorowaną na klasycznym Pascalu. **Implementacja** reguł w generatorze **PLY** znajduje się w pliku [`src/parser.py`](./src/parser.py); w razie rozbieżności szczegółowych (np. zapis listy instrukcji, wywołania) **źródłem prawdy** jest kod parsera oraz programy przykładowe w katalogu `examples/`.
 
 ```bnf
 // ==========================================
@@ -268,7 +311,8 @@ Gramatyka zostanie zaimplementowana w notacji generatora **PLY**. Ponizej znajdu
 ---
 
 ## Struktura projektu
-* `/src` – kod źródłowy transpilera (Lexer, Parser, Generator kodu).
-* `/docs` – dokumentacja techniczna, spis tokenów oraz gramatyka projektu.
-* `/examples` – przykładowe programy w języku EmojiPascal (pliki `.ep`).  <!--albo inne rozszerzenie -->
-* `/output` – wygenerowane pliki źródłowe w języku C.
+* **`/src`** — kod źródłowy narzędzi: analizator leksykalny (`lexer.py`), analizator składniowy (`parser.py`), definicje emoji (`emoji_language.py`), skrypt eksportu do `.pas` (`emoji_to_pascal.py`), punkt wejścia wiersza poleceń (`main.py`).
+* **`/docs`** — dokumentacja techniczna (m.in. spis tokenów).
+* **`/examples`** — programy przykładowe w EmojiPascal (pliki z rozszerzeniem `.ep`).
+* **`/output/pascal`** — domyślny katalog zapisu plików `.pas` generowanych przez `emoji_to_pascal.py` (gdy nie podano jawnej ścieżki wyjściowej).
+* **`/output`** — (planowane) katalog na wygenerowany kod języka C po zaimplementowaniu emitera z AST.

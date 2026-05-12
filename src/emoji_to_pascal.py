@@ -1,92 +1,17 @@
-#uzycie: python3 src/emoji_to_pascal.py <input.ep> [output.pas]
+# Uzycie: python3 src/emoji_to_pascal.py <input.ep> [output.pas]
 
 from __future__ import annotations
 
 import sys
 from pathlib import Path
 
-
-EMOJI_TO_PASCAL = {
-    "🏁": "program",
-    "📌": "const",
-    "📦": "var",
-    "⚙️": "function",
-    "🔧": "procedure",
-    "🚦": "begin",
-    "🛑": "end",
-    "↩️": "exit",
-    "❓": "if",
-    "➡️": "then",
-    "🙅": "else",
-    "🔁🔂": "repeat",
-    "🔂▶️": "until",
-    "🔁": "while",
-    "▶️": "do",
-    "🔂": "for",
-    "⬆️": "to",
-    "⬇️": "downto",
-    "🧭": "case",
-    "🧾": "of",
-    "🖨️": "writeln",
-    "📥": "readln",
-    "📤": "var",
-    "🔢": "integer",
-    "🌊": "real",
-    "🧵": "string",
-    "✅": "boolean",
-    "🔡": "char",
-    "📚": "array",
-    "🧱": "record",
-    "⬅️": ":=",
-    "✨": "",
-    "➕": "+",
-    "➖": "-",
-    "✖️": "*",
-    "➗": "/",
-    "✂️": "mod",
-    "🟰": "=",
-    "❌": "<>",
-    "🔽": "<",
-    "⏬": "<=",
-    "🔼": ">",
-    "⏫": ">=",
-    "🤝": "and",
-    "🔀": "or",
-    "🚫": "not",
-    "↔️": "..",
-    "💠": ".",
-    "🔹": ";",
-    "📍": ":",
-    "📎": ",",
-    "🔚": ".",
-    "🤜": "(",
-    "🤛": ")",
-}
-
-KEYCAP_MAP = {
-    "0️⃣": "0",
-    "1️⃣": "1",
-    "2️⃣": "2",
-    "3️⃣": "3",
-    "4️⃣": "4",
-    "5️⃣": "5",
-    "6️⃣": "6",
-    "7️⃣": "7",
-    "8️⃣": "8",
-    "9️⃣": "9",
-}
-
-
-def convert_emoji_numbers(text: str) -> str:
-    for keycap, digit in KEYCAP_MAP.items():
-        text = text.replace(keycap, digit)
-    return text
+from emoji_language import EMOJI_TO_PASCAL_TEXT, normalize_keycap_digits
 
 
 def convert_emoji_pascal_to_pascal(text: str) -> str:
-    text = convert_emoji_numbers(text)
-    for emoji in sorted(EMOJI_TO_PASCAL.keys(), key=len, reverse=True):
-        text = text.replace(emoji, EMOJI_TO_PASCAL[emoji])
+    text = normalize_keycap_digits(text)
+    for emoji in sorted(EMOJI_TO_PASCAL_TEXT.keys(), key=len, reverse=True):
+        text = text.replace(emoji, EMOJI_TO_PASCAL_TEXT[emoji])
     return text
 
 

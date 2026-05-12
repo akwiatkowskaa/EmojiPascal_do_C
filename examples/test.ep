@@ -1,0 +1,56 @@
+🏁 TestGramatyki 🔹
+
+// [ETAP] DECLARACJE: const + var
+📌
+    LIMIT 🟰 1️⃣0️⃣ 🔹
+
+📦
+    i 📍 🔢 🔹
+    suma 📍 🔢 🔹
+    ok 📍 ✅ 🔹
+    arr 📍 📚 🤜 1️⃣ ↔️ 5️⃣ 🤛 🧾 🔢 🔹
+
+// [ETAP] PODPROGRAMY: procedure + function
+🔧 WypiszInfo 🤜 txt 📍 🧵 🤛 🔹
+🚦
+    // [ETAP] INSTRUKCJA: print + procedure call z argumentem
+    🖨️ 🤜 txt 🤛 🔹
+🛑 🔹
+
+⚙️ CzyDodatnia 🤜 x 📍 🔢 🤛 📍 ✅ 🔹
+🚦
+    // [ETAP] STEROWANIE + BOOL: relacja i return
+    ❓ x 🔼 0️⃣ ➡️ ↩️ 👍 🙅 ↩️ 👎 🔹
+🛑 🔹
+
+🚦
+    // [ETAP] ASSIGN + WYRAZENIA MATEMATYCZNE
+    suma ⬅️ 0️⃣ 🔹
+    ok ⬅️ 👍 🔹
+
+    // [ETAP] FOR TO
+    🔂 i ⬅️ 1️⃣ ⬆️ 5️⃣ ▶️
+        arr 🤜 i 🤛 ⬅️ i ✖️ 2️⃣ 🔹
+
+    // [ETAP] WHILE + BOOL (zmienna bool + and + not)
+    🔁 ok 🤝 🚫 👎 ▶️
+        🚦
+            suma ⬅️ suma ➕ 1️⃣ 🔹
+            ❓ suma ⏫ LIMIT ➡️ ok ⬅️ 👎 🔹
+        🛑 🔹
+
+    // [ETAP] REPEAT UNTIL
+    🔁🔂
+        suma ⬅️ suma ➖ 1️⃣ 🔹
+    🔂▶️ suma 🟰 0️⃣ 🔹
+
+    // [ETAP] CASE OF
+    🧭 2️⃣ 🧾
+        1️⃣ ➡️ 🖨️ 🤜 "jeden" 🤛 🔹
+        2️⃣ 📎 3️⃣ ➡️ 🖨️ 🤜 "dwa albo trzy" 🤛 🔹
+        🙅 🖨️ 🤜 "inne" 🤛 🔹
+    🛑 🔹
+
+    // [ETAP] PROCEDURE CALL (bez i z nawiasami)
+    WypiszInfo 🤜 "Koniec testu" 🤛 🔹
+🛑 🔚

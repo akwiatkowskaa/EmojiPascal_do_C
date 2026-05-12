@@ -116,7 +116,7 @@ W EmojiPascal literały liczbowe składają się z sekwencji cyfr w ramkach. Naz
 | `IDENTIFIER` | `x`, `suma_1` | Alfanumeryczne nazwy zmiennych |
 | `LITERAL_STR` | `"Tekst"` | Napisy ujęte w cudzysłów |
 | `LITERAL_CHAR` | `'A'` | Znak pojedynczy |
-| `LITERAL_BOOL` | `true`, `false` | Stałe logiczne |
+| `LITERAL_BOOL` | `👍` / `👎` lub `true`, `false` | Stałe logiczne (`👍` = prawda, `👎` = fałsz) |
 | `COMMENT` | `//`, `{...}`, `(*...*)` | Komentarze ignorowane przez parser |
 | `WHITESPACE` | ` ` | Spacje, tabulatory, znaki nowej linii |
 | `EOF` | *(brak symbolu)* | Koniec strumienia wejscia (generowany przez lexer) |

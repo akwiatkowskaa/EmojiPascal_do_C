@@ -1,3 +1,7 @@
 __pycache__/
 *.pyc
 .venv/
+
+# PLY — artefakty generowane przy budowie parsera
+parser.out
+parsetab.py

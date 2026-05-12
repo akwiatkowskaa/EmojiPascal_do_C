@@ -1,0 +1,2 @@
+# Zależności narzędzi EmojiPascal (lexer/parser PLY). 
+ply>=3.11
