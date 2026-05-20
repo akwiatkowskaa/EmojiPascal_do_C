@@ -19,7 +19,7 @@ Program jest **transpilerem** — dokonuje translacji kodu źródłowego w języ
 ### Planowany wynik działania programu
 Docelowym wynikiem prac jest **transpiler** języka EmojiPascal do **kodu źródłowego w języku C**, gotowego do kompilacji przy użyciu kompilatora `gcc`.
 
-**Stan realizacji (bieżący etap):** zaimplementowano **analizę leksykalną** oraz **analizę składniową** z budową **drzewa składniowego (AST)**. **Generator kodu C** z AST pozostaje do wykonania. Dostępny jest ponadto **skrypt pomocniczy** `emoji_to_pascal.py`, który zamienia symbole emoji na odpowiedniki leksykalne w konwencji Pascala i zapisuje plik `.pas` — jest to **podstawienie tekstowe**, a nie pełna transpilacja semantyczna.
+**Stan realizacji (bieżący etap):** zaimplementowano **analizę leksykalną** oraz **analizę składniową** z budową **drzewa składniowego (AST)**. Rozpoczęto **generator kodu C** (`codegen_c.py`): flaga `--emit-c` zapisuje szkielet pliku `.c` z `main` (nazwa programu z AST); emisja instrukcji z `.ep` — w toku (fazy B–C planu). Dostępny jest ponadto **skrypt pomocniczy** `emoji_to_pascal.py`, który zamienia symbole emoji na odpowiedniki leksykalne w konwencji Pascala i zapisuje plik `.pas` — jest to **podstawienie tekstowe**, a nie pełna transpilacja semantyczna.
 
 ### Język implementacji i środowisko
 * **Python:** wersja **3.10 lub nowsza** (zalecana aktualna stabilna wersja interpretera).
@@ -74,6 +74,25 @@ python3 src/emoji_to_pascal.py ścieżka/do/programu.ep
 
 * **Domyślna lokalizacja zapisu:** `output/pascal/<nazwa_pliku_bez_rozszerzenia>.pas` (podkatalog jest tworzony w razie potrzeby).
 * **Jawna ścieżka wyjściowa:** `python3 src/emoji_to_pascal.py wejście.ep ścieżka/wyjście.pas`
+
+### Emisja kodu C (w toku)
+
+Po poprawnym sparsowaniu program generuje **szkielet** kodu C z `main` (treść instrukcji z `.ep` będzie dodawana etapami). Wynik zapisuje się do pliku; na stdout pojawia się komunikat `Zapisano: …`.
+
+```bash
+python3 src/main.py --emit-c ścieżka/do/programu.ep
+```
+
+* **Domyślna lokalizacja zapisu:** `output/c/<nazwa_pliku_bez_rozszerzenia>.c`
+* **Jawna ścieżka wyjściowa:** `python3 src/main.py --emit-c ścieżka/wyjście.c wejście.ep`
+
+Kompilacja wygenerowanego pliku (na tym etapie pusty `main`):
+
+```bash
+gcc -Wall -o /tmp/out output/c/suma_do_n.c
+/tmp/out
+echo exit:$?
+```
 
 
 ---
@@ -315,4 +334,4 @@ Poniżej zestawiono **docelową** specyfikację składni w notacji zbliżonej do
 * **`/docs`** — dokumentacja techniczna (m.in. spis tokenów).
 * **`/examples`** — programy przykładowe w EmojiPascal (pliki z rozszerzeniem `.ep`).
 * **`/output/pascal`** — domyślny katalog zapisu plików `.pas` generowanych przez `emoji_to_pascal.py` (gdy nie podano jawnej ścieżki wyjściowej).
-* **`/output`** — (planowane) katalog na wygenerowany kod języka C po zaimplementowaniu emitera z AST.
+* **`/output/c`** — domyślny katalog zapisu plików `.c` generowanych przez `main.py --emit-c`.

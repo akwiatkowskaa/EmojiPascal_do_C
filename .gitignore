@@ -2,6 +2,9 @@ __pycache__/
 *.pyc
 .venv/
 
+# PyCharm / IntelliJ — ustawienia lokalne IDE
+.idea/
+
 # PLY — artefakty generowane przy budowie parsera
 parser.out
 parsetab.py
