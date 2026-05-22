@@ -8,3 +8,12 @@ __pycache__/
 # PLY — artefakty generowane przy budowie parsera
 parser.out
 parsetab.py
+src/parser.out
+src/parsetab.py
+
+# Binaria po kompilacji (demo / testy lokalne)
+*.o
+/suma
+/gcd
+/test
+/emojipascal_*

@@ -387,8 +387,47 @@ Poniżej zestawiono **docelową** specyfikację składni w notacji zbliżonej do
 
 ---
 
+## Testy automatyczne
+
+Z katalogu głównego repozytorium (wymaga `gcc` w PATH dla testów integracyjnych):
+
+```bash
+python3 -m unittest discover -s tests -v
+```
+
+* `tests/test_parse_examples.py` — parser akceptuje wszystkie pliki `examples/*.ep` (oprócz `bad_*.ep`).
+* `tests/test_emit_integration.py` — `--emit-c`, kompilacja, uruchomienie `suma_do_n` / NWD / `test.ep`; błąd semantyczny dla `bad_niezadeklarowana.ep`.
+
+## Skrypt demo
+
+```bash
+chmod +x scripts/demo.sh
+./scripts/demo.sh
+```
+
+Uruchamia po kolei trzy przykłady z [Szybki start](#szybki-start) i wypisuje wyniki na stdout.
+
+## Pokrycie transpilera (EP → C)
+
+| Konstrukcja | Status |
+|:---|:---:|
+| `program`, `var`, `begin`/`end` | tak |
+| `const` | tak (`#define`) |
+| `integer`, przypisania, wyrażenia `+−*/%` | tak |
+| `if` / `else`, `while`, `for` / `to` / `downto` | tak |
+| `repeat` / `until`, `case` / `of` | tak |
+| `print`, `input` (`printf` / `scanf`) | tak |
+| `boolean`, `and` / `or` / `not` | tak |
+| tablice `array[low..high]` | tak |
+| procedury / funkcje, wywołania | tak |
+| `record`, `real`, `char`, `CAST`, `BYREF` | nie (planowane rozszerzenia) |
+
+Szczegóły tokenów poza zakresem: [docs/tokeny.md](./docs/tokeny.md) (sekcja 7).
+
 ## Struktura projektu
-* **`/src`** — `lexer.py`, `parser.py`, `codegen_c.py` (emiter C), `emoji_language.py`, `emoji_to_pascal.py`, `main.py` (CLI: tokeny, `--parse`, `--emit-c`).
+* **`/src`** — `lexer.py`, `parser.py`, `codegen_c.py`, `semantic.py`, `emoji_language.py`, `emoji_to_pascal.py`, `main.py`.
+* **`/tests`** — testy `unittest` (parse, emit, semantyka).
+* **`/scripts`** — `demo.sh` (demo wszystkich przykładów).
 * **`/docs`** — dokumentacja techniczna (m.in. [tokeny](./docs/tokeny.md)).
 * **`/examples`** — programy `.ep` (źródła do testów transpilera).
 * **`/output/c`** — wygenerowane pliki `.c` (`--emit-c`); można commitować jako referencję lub generować lokalnie.

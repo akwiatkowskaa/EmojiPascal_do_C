@@ -131,8 +131,16 @@ W EmojiPascal literały liczbowe składają się z sekwencji cyfr w ramkach. Naz
 - Funkcje i procedury moga miec pusta liste parametrow.
 - `case` i `repeat-until` sa przewidziane jako elementy etapu rozszerzonego.
 
-## 7. Minimalny zakres wdrozenia 
+## 7. Zakres wdrozenia w transpilerze (stan biezacy)
 
-1. Tokeny podstawowe: deklaracje, przypisanie, wyrazenia, `if`, `while`, `for`, funkcja/procedura.
-2. Typy podstawowe: `int`, `real`, `bool`, `string`.
-3. Dodatki po MVP: `record`, `case`, pelne wsparcie indeksowania i dostepu do pol.
+Zaimplementowane w sciezce `--emit-c` (m.in. `examples/test.ep`):
+
+1. Deklaracje `const` / `var`, przypisanie, wyrazenia arytmetyczne i relacyjne, `if`, `while`, `for`, `repeat`/`until`, `case`.
+2. Typy: `int`, `bool` (jako `int` w C), `string` (parametry / `printf` `%s`), tablice `array[low..high]`.
+3. Procedury i funkcje z parametrami by-value; `return` w funkcji.
+
+Poza zakresem (na razie):
+
+- typ `record` (`🧱`) — token w lexerze, brak reguly w parserze;
+- `real`, `char`, rzutowanie `CAST`, parametry `BYREF` (`📤`);
+- pelny dostep do pol rekordu (`💠`) w wyrazeniach.
