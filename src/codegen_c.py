@@ -93,7 +93,20 @@ class EmitContext:
         if tag == "For":
             self.emit_for(node)
             return
+        if tag == "While":
+            self.emit_while(node)
+            return
         raise NotImplementedEmit(f"instrukcja: {tag}")
+
+    def emit_while(self, node: tuple) -> None:
+        if node[0] != "While":
+            raise ValueError(f"Oczekiwano While, jest {node[0]!r}")
+        cond, body = node[1], node[2]
+        self.emit_line(f"while ({self.emit_expr(cond)}) {{")
+        self.indent()
+        self.emit_stmt(body)
+        self.dedent()
+        self.emit_line("}")
 
     def emit_print(self, node: tuple) -> None:
         if node[0] != "Print":
@@ -163,10 +176,21 @@ class EmitContext:
         op, left, right = node[1], node[2], node[3]
         left_e = self.emit_expr(left)
         right_e = self.emit_expr(right)
-        if op == "PLUS":
-            return f"({left_e} + {right_e})"
-        if op == "MINUS":
-            return f"({left_e} - {right_e})"
+        c_ops = {
+            "PLUS": "+",
+            "MINUS": "-",
+            "MUL": "*",
+            "DIV": "/",
+            "MOD": "%",
+            "EQ": "==",
+            "NEQ": "!=",
+            "LT": "<",
+            "LE": "<=",
+            "GT": ">",
+            "GE": ">=",
+        }
+        if op in c_ops:
+            return f"({left_e} {c_ops[op]} {right_e})"
         raise NotImplementedEmit(f"operator: {op}")
 
 

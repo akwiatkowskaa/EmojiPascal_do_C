@@ -8,6 +8,32 @@ EmojiPascal – Transpiler języka opartego na Pascalu na język C
 
 ---
 
+## Szybki start
+
+**Wymagania:** Python 3.10+, kompilator `gcc`, zależności z `requirements.txt`.
+
+Wszystkie poniższe polecenia uruchamiaj z **katalogu głównego repozytorium** (tam, gdzie leżą `src/` i `examples/`).
+
+```bash
+pip install -r requirements.txt
+
+# Suma liczb od 1 do n
+python3 src/main.py --emit-c examples/suma_do_n.ep
+gcc -Wall -o suma output/c/suma_do_n.c
+printf "5\n" | ./suma
+# Oczekiwany wynik: komunikaty + suma 15 (dla n=5)
+
+# Największy wspólny dzielnik (Euklides)
+python3 src/main.py --emit-c examples/najwiekszy_wspolny_dzielnik.ep
+gcc -Wall -o gcd output/c/najwiekszy_wspolny_dzielnik.c
+printf "48\n18\n" | ./gcd
+# Oczekiwany wynik: NWD = 6
+```
+
+Ścieżka translacji: plik `.ep` → parser (AST) → `codegen_c.py` → plik `.c` → `gcc`. **Nie** trzeba generować pliku `.pas` po drodze.
+
+---
+
 ## Założenia programu
 
 ### Ogólne cele programu
@@ -19,7 +45,15 @@ Program jest **transpilerem** — dokonuje translacji kodu źródłowego w języ
 ### Planowany wynik działania programu
 Docelowym wynikiem prac jest **transpiler** języka EmojiPascal do **kodu źródłowego w języku C**, gotowego do kompilacji przy użyciu kompilatora `gcc`.
 
-**Stan realizacji (bieżący etap):** zaimplementowano **analizę leksykalną** oraz **analizę składniową** z budową **drzewa składniowego (AST)**. Rozpoczęto **generator kodu C** (`codegen_c.py`): flaga `--emit-c` zapisuje szkielet pliku `.c` z `main` (nazwa programu z AST); emisja instrukcji z `.ep` — w toku (fazy B–C planu). Dostępny jest ponadto **skrypt pomocniczy** `emoji_to_pascal.py`, który zamienia symbole emoji na odpowiedniki leksykalne w konwencji Pascala i zapisuje plik `.pas` — jest to **podstawienie tekstowe**, a nie pełna transpilacja semantyczna.
+**Stan realizacji (bieżący etap):** działa pełna ścieżka **lexer → parser (AST) → emiter C** (`codegen_c.py`, flaga `--emit-c`). Dwa programy z katalogu `examples/` można wygenerować do C, skompilować (`gcc`) i uruchomić — patrz [Szybki start](#szybki-start). Rozbudowa emitera pod pozostałe konstrukcje (m.in. `test.ep`: const, tablice, procedury, `case`) — w toku.
+
+Osobno dostępny **skrypt pomocniczy** `emoji_to_pascal.py`: zamiana emoji na słowa Pascala i zapis `.pas` — to **podstawienie tekstowe**, nie etap pipeline’u do C.
+
+| Plik w `examples/` | `--emit-c` + `gcc` + uruchomienie |
+|:---|:---:|
+| `suma_do_n.ep` | tak |
+| `najwiekszy_wspolny_dzielnik.ep` | tak |
+| `test.ep` | nie (jeszcze nieobsługiwane konstrukcje) |
 
 ### Język implementacji i środowisko
 * **Python:** wersja **3.10 lub nowsza** (zalecana aktualna stabilna wersja interpretera).
@@ -45,55 +79,71 @@ PLY umożliwia w szczególności:
 
 ## Uruchomienie narzędzi
 
-Polecenia wywołuj z **katalogu głównego repozytorium** (tam, gdzie leżą m.in. `src/` i `examples/`). Ścieżkę do pliku `.ep` podaj względem tego katalogu (np. `examples/test.ep`).
+Polecenia wywołuj z **katalogu głównego repozytorium**. Ścieżkę do pliku `.ep` podaj względem tego katalogu (np. `examples/suma_do_n.ep`).
 
-Interpreter Pythona **sam dodaje** do ścieżki importów folder zawierający uruchamiany skrypt — w przypadku `python3 src/main.py` jest to katalog `src/`, więc importy `lexer` i `parser` działają **bez** ustawiania `PYTHONPATH`.
+Interpreter Pythona **sam dodaje** do ścieżki importów folder `src/` przy `python3 src/main.py` — importy `lexer`, `parser`, `codegen_c` działają **bez** `PYTHONPATH`.
 
-### Analiza leksykalna (lista tokenów)
-Wynik trafia na **standardowe wyjście** (`stdout`). **Nie** jest tworzony żaden plik wyjściowy.
+### Dwie niezależne ścieżki z pliku `.ep`
+
+| Ścieżka | Narzędzie | Wynik |
+|:---|:---|:---|
+| **Główna (transpiler)** | `main.py --emit-c` | `output/c/*.c` → kompilacja `gcc` |
+| **Pomocnicza (podgląd)** | `emoji_to_pascal.py` | `output/pascal/*.pas` (podstawienie emoji, bez AST) |
+
+Łańcuch **`.ep` → `.pas` → `.c` nie istnieje** — do C idzie wyłącznie przez AST.
+
+### Transpilacja do C i kompilacja
+
+Po poprawnym sparsowaniu emiter zapisuje kod C; na stdout: `Zapisano: …`.
 
 ```bash
-python3 src/main.py ścieżka/do/programu.ep
+python3 src/main.py --emit-c ścieżka/do/programu.ep
+gcc -Wall -o program output/c/nazwa_pliku.c
+./program
 ```
 
-### Analiza składniowa (AST, tryb diagnostyczny)
-Po poprawnym sparsowaniu program wypisuje **drzewo składniowe** w postaci czytelnej dla człowieka. Wynik trafia na **stdout**; program **nie** zapisuje AST do pliku automatycznie.
+* **Domyślny zapis:** `output/c/<nazwa_bez_rozszerzenia>.c`
+* **Jawna ścieżka wyjściowa:** `python3 src/main.py --emit-c ścieżka/wyjście.c wejście.ep`
+
+Programy z wejściem z klawiatury (`scanf`) uruchamiaj z danymi na stdin, np. `printf "5\n" | ./suma` — szczegóły w [Szybki start](#szybki-start).
+
+Przy starcie parsera mogą pojawić się ostrzeżenia PLY o nieużywanym tokenie `RECORD` — można je zignorować.
+
+### Tryby `main.py` (diagnostyka)
+
+| Polecenie | Efekt | Plik wyjściowy |
+|:---|:---|:---|
+| `python3 src/main.py plik.ep` | lista tokenów na stdout | — |
+| `python3 src/main.py --parse plik.ep` | drzewo AST na stdout | — |
+| `python3 src/main.py --emit-c plik.ep` | generacja kodu C | `output/c/…` |
 
 ```bash
-python3 src/main.py --parse ścieżka/do/programu.ep
+python3 src/main.py examples/suma_do_n.ep
+python3 src/main.py --parse examples/suma_do_n.ep
 ```
 
-Przykładowe programy: katalog [`examples/`](./examples/) (m.in. `test.ep`, `suma_do_n.ep`).
+Przykłady: katalog [`examples/`](./examples/).
 
-### Eksport do pliku `.pas` (zamiana emoji na słowa kluczowe Pascala)
-Skrypt wykonuje **mapowanie symboli** zgodnie z definicjami w `src/emoji_language.py`. Nie korzysta z AST.
+### Eksport do pliku `.pas` (opcjonalnie)
+
+Mapowanie symboli emoji → słowa Pascala (`src/emoji_language.py`). **Nie** korzysta z AST i **nie** służy do budowy pliku `.c`.
 
 ```bash
 python3 src/emoji_to_pascal.py ścieżka/do/programu.ep
 ```
 
-* **Domyślna lokalizacja zapisu:** `output/pascal/<nazwa_pliku_bez_rozszerzenia>.pas` (podkatalog jest tworzony w razie potrzeby).
-* **Jawna ścieżka wyjściowa:** `python3 src/emoji_to_pascal.py wejście.ep ścieżka/wyjście.pas`
+* **Domyślnie:** `output/pascal/<nazwa>.pas`
+* **Jawnie:** `python3 src/emoji_to_pascal.py wejście.ep ścieżka/wyjście.pas`
 
-### Emisja kodu C (w toku)
+### Rozwiązywanie problemów
 
-Po poprawnym sparsowaniu program generuje **szkielet** kodu C z `main` (treść instrukcji z `.ep` będzie dodawana etapami). Wynik zapisuje się do pliku; na stdout pojawia się komunikat `Zapisano: …`.
-
-```bash
-python3 src/main.py --emit-c ścieżka/do/programu.ep
-```
-
-* **Domyślna lokalizacja zapisu:** `output/c/<nazwa_pliku_bez_rozszerzenia>.c`
-* **Jawna ścieżka wyjściowa:** `python3 src/main.py --emit-c ścieżka/wyjście.c wejście.ep`
-
-Kompilacja wygenerowanego pliku (na tym etapie pusty `main`):
-
-```bash
-gcc -Wall -o /tmp/out output/c/suma_do_n.c
-/tmp/out
-echo exit:$?
-```
-
+| Problem | Co zrobić |
+|:---|:---|
+| `ModuleNotFoundError: ply` | `pip install -r requirements.txt` |
+| `Blad skladni` / `Blad parsera` | porównaj `.ep` z działającymi przykładami w `examples/` |
+| `NotImplementedError` przy `--emit-c` | konstrukcja jeszcze nieobsługiwana w emiterze (np. `test.ep`) |
+| `gcc: command not found` | zainstaluj pakiet z kompilatorem C (np. `build-essential`) |
+| Program „nic nie robi” / zły wynik | czy podajesz liczby na stdin (`printf "5\n" \| ./suma`) |
 
 ---
 
@@ -143,6 +193,8 @@ Program przyjmuje od użytkownika dwie liczby całkowite, znajduje ich najwięks
     🖨️ 🤜 a 🤛 🔹
 🛑 🔚
 ```
+
+Uruchomienie tego programu po transpilacji: [Szybki start](#szybki-start) (sekcja NWD).
 
 ---
 
@@ -330,8 +382,8 @@ Poniżej zestawiono **docelową** specyfikację składni w notacji zbliżonej do
 ---
 
 ## Struktura projektu
-* **`/src`** — kod źródłowy narzędzi: analizator leksykalny (`lexer.py`), analizator składniowy (`parser.py`), definicje emoji (`emoji_language.py`), skrypt eksportu do `.pas` (`emoji_to_pascal.py`), punkt wejścia wiersza poleceń (`main.py`).
-* **`/docs`** — dokumentacja techniczna (m.in. spis tokenów).
-* **`/examples`** — programy przykładowe w EmojiPascal (pliki z rozszerzeniem `.ep`).
-* **`/output/pascal`** — domyślny katalog zapisu plików `.pas` generowanych przez `emoji_to_pascal.py` (gdy nie podano jawnej ścieżki wyjściowej).
-* **`/output/c`** — domyślny katalog zapisu plików `.c` generowanych przez `main.py --emit-c`.
+* **`/src`** — `lexer.py`, `parser.py`, `codegen_c.py` (emiter C), `emoji_language.py`, `emoji_to_pascal.py`, `main.py` (CLI: tokeny, `--parse`, `--emit-c`).
+* **`/docs`** — dokumentacja techniczna (m.in. [tokeny](./docs/tokeny.md)).
+* **`/examples`** — programy `.ep` (źródła do testów transpilera).
+* **`/output/c`** — wygenerowane pliki `.c` (`--emit-c`); można commitować jako referencję lub generować lokalnie.
+* **`/output/pascal`** — wygenerowane `.pas` (`emoji_to_pascal.py`), niezależnie od ścieżki do C.
