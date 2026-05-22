@@ -28,6 +28,11 @@ python3 src/main.py --emit-c examples/najwiekszy_wspolny_dzielnik.ep
 gcc -Wall -o gcd output/c/najwiekszy_wspolny_dzielnik.c
 printf "48\n18\n" | ./gcd
 # Oczekiwany wynik: NWD = 6
+
+# Test gramatyki (case, procedury, petle)
+python3 src/main.py --emit-c examples/test.ep
+gcc -Wall -o test output/c/test.c
+./test
 ```
 
 Ścieżka translacji: plik `.ep` → parser (AST) → `codegen_c.py` → plik `.c` → `gcc`. **Nie** trzeba generować pliku `.pas` po drodze.
@@ -45,7 +50,7 @@ Program jest **transpilerem** — dokonuje translacji kodu źródłowego w języ
 ### Planowany wynik działania programu
 Docelowym wynikiem prac jest **transpiler** języka EmojiPascal do **kodu źródłowego w języku C**, gotowego do kompilacji przy użyciu kompilatora `gcc`.
 
-**Stan realizacji (bieżący etap):** działa pełna ścieżka **lexer → parser (AST) → emiter C** (`codegen_c.py`, flaga `--emit-c`). Dwa programy z katalogu `examples/` można wygenerować do C, skompilować (`gcc`) i uruchomić — patrz [Szybki start](#szybki-start). Rozbudowa emitera pod pozostałe konstrukcje (m.in. `test.ep`: const, tablice, procedury, `case`) — w toku.
+**Stan realizacji (bieżący etap):** działa pełna ścieżka **lexer → parser (AST) → analiza semantyczna → emiter C** (`codegen_c.py`, flaga `--emit-c`). Programy `suma_do_n.ep`, `najwiekszy_wspolny_dzielnik.ep` i `test.ep` można wygenerować do C, skompilować (`gcc`) i uruchomić — patrz [Szybki start](#szybki-start).
 
 Osobno dostępny **skrypt pomocniczy** `emoji_to_pascal.py`: zamiana emoji na słowa Pascala i zapis `.pas` — to **podstawienie tekstowe**, nie etap pipeline’u do C.
 
@@ -53,7 +58,7 @@ Osobno dostępny **skrypt pomocniczy** `emoji_to_pascal.py`: zamiana emoji na s�
 |:---|:---:|
 | `suma_do_n.ep` | tak |
 | `najwiekszy_wspolny_dzielnik.ep` | tak |
-| `test.ep` | nie (jeszcze nieobsługiwane konstrukcje) |
+| `test.ep` | tak (const, tablice, procedury/funkcje, `case`, `repeat`, logika) |
 
 ### Język implementacji i środowisko
 * **Python:** wersja **3.10 lub nowsza** (zalecana aktualna stabilna wersja interpretera).

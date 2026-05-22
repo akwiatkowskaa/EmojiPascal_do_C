@@ -10,26 +10,37 @@ class SemanticError(Exception):
 class SymbolTable:
     def __init__(self) -> None:
         self._symbols: dict[str, str] = {}
+        self._kinds: dict[str, str] = {}
 
-    def declare(self, name: str, type_token: str, *, kind: str = "var") -> None:
+    def declare(
+        self,
+        name: str,
+        type_token: str,
+        *,
+        kind: str = "var",
+    ) -> None:
         if name in self._symbols:
             raise SemanticError(
                 f"Symbol '{name}' zadeklarowany wielokrotnie ({kind})"
             )
         self._symbols[name] = type_token
+        self._kinds[name] = kind
 
     def lookup(self, name: str) -> str:
         if name not in self._symbols:
             raise SemanticError(f"Niezadeklarowana zmienna '{name}'")
         return self._symbols[name]
 
-    def has(self, name: str) -> bool:
-        return name in self._symbols
+    def lookup_kind(self, name: str) -> str:
+        self.lookup(name)
+        return self._kinds[name]
 
 
 def _type_token(type_node: tuple) -> str:
     if type_node[0] == "TypeSimple":
         return type_node[1]
+    if type_node[0] == "TypeArray":
+        return "TYPE_ARRAY"
     raise SemanticError(f"Nieobslugiwany typ: {type_node[0]!r}")
 
 
@@ -41,6 +52,9 @@ def analyze(ast: tuple) -> None:
 
 
 class _Analyzer:
+    def __init__(self) -> None:
+        self._subprogram_names: set[str] = set()
+
     def visit_block(self, node: tuple) -> None:
         if node[0] != "Block":
             raise ValueError(f"Oczekiwano Block, jest {node[0]!r}")
@@ -56,29 +70,27 @@ class _Analyzer:
         for decl in var_section:
             self._register_var_decl(table, decl)
         for sub in subprograms:
-            self._check_subprogram(sub)
+            self._register_subprogram(sub)
         self._visit_compound(table, compound)
 
     def _register_const(self, table: SymbolTable, node: tuple) -> None:
         if node[0] != "ConstDecl":
             raise ValueError(f"Oczekiwano ConstDecl, jest {node[0]!r}")
         name, value = node[1], node[2]
-        type_token = self._literal_type(value)
-        table.declare(name, type_token, kind="const")
+        table.declare(name, self._literal_type(value), kind="const")
 
     def _literal_type(self, node: tuple) -> str:
         tag = node[0]
-        if tag == "Int":
-            return "TYPE_INT"
-        if tag == "Real":
-            return "TYPE_REAL"
-        if tag == "Bool":
-            return "TYPE_BOOL"
-        if tag == "Str":
-            return "TYPE_STRING"
-        if tag == "Char":
-            return "TYPE_CHAR"
-        raise SemanticError(f"Nieobslugiwana stala: {tag}")
+        mapping = {
+            "Int": "TYPE_INT",
+            "Real": "TYPE_REAL",
+            "Bool": "TYPE_BOOL",
+            "Str": "TYPE_STRING",
+            "Char": "TYPE_CHAR",
+        }
+        if tag not in mapping:
+            raise SemanticError(f"Nieobslugiwana stala: {tag}")
+        return mapping[tag]
 
     def _register_var_decl(self, table: SymbolTable, node: tuple) -> None:
         if node[0] != "VarDecl":
@@ -88,11 +100,35 @@ class _Analyzer:
         for name in id_list:
             table.declare(name, type_token)
 
-    def _check_subprogram(self, node: tuple) -> None:
-        """Podprogramy — pełna semantyka w fazie F; na razie tylko składnia w AST."""
-        tag = node[0]
-        if tag not in ("Procedure", "Function"):
-            raise ValueError(f"Nieznany podprogram: {tag}")
+    def _register_subprogram(self, node: tuple) -> None:
+        if node[0] == "Procedure":
+            name, params, inner = node[1], node[2], node[3]
+            if name in self._subprogram_names:
+                raise SemanticError(f"Podprogram '{name}' zadeklarowany wielokrotnie")
+            self._subprogram_names.add(name)
+            self._analyze_inner(params, inner)
+            return
+        if node[0] == "Function":
+            name, params, _ret, inner = node[1], node[2], node[3], node[4]
+            if name in self._subprogram_names:
+                raise SemanticError(f"Podprogram '{name}' zadeklarowany wielokrotnie")
+            self._subprogram_names.add(name)
+            self._analyze_inner(params, inner)
+            return
+        raise ValueError(f"Nieznany podprogram: {node[0]!r}")
+
+    def _analyze_inner(self, params: list, inner: tuple) -> None:
+        table = SymbolTable()
+        for group in params:
+            if group[0] != "Param":
+                raise ValueError(f"Oczekiwano Param, jest {group[0]!r}")
+            _byref, ids, type_name = group[1], group[2], group[3]
+            type_token = _type_token(type_name)
+            for pid in ids:
+                table.declare(pid, type_token, kind="param")
+        for decl in inner[1]:
+            self._register_var_decl(table, decl)
+        self._visit_compound(table, inner[2])
 
     def _visit_compound(self, table: SymbolTable, node: tuple) -> None:
         if node[0] != "Compound":
@@ -110,7 +146,7 @@ class _Analyzer:
             for expr in node[1] or []:
                 self._visit_expr(table, expr)
         elif tag == "Input":
-            self._visit_var_ref(table, node[1])
+            self._visit_lvalue(table, node[1])
         elif tag == "For":
             self._visit_for(table, node)
         elif tag == "While":
@@ -121,29 +157,57 @@ class _Analyzer:
             self._visit_stmt(table, node[2])
             if node[3] is not None:
                 self._visit_stmt(table, node[3])
+        elif tag == "Repeat":
+            for stmt in node[1]:
+                self._visit_stmt(table, stmt)
+            self._visit_expr(table, node[2])
+        elif tag == "Case":
+            self._visit_expr(table, node[1])
+            for arm in node[2]:
+                for label in arm[1]:
+                    self._visit_expr(table, label)
+                self._visit_stmt(table, arm[2])
+            if node[3] is not None:
+                self._visit_stmt(table, node[3])
+        elif tag == "Return":
+            if node[1] is not None:
+                self._visit_expr(table, node[1])
+        elif tag == "ExprStmt":
+            self._visit_call(table, node[1])
         else:
             raise SemanticError(f"Nieobslugiwana instrukcja w analizie: {tag}")
 
     def _visit_assign(self, table: SymbolTable, node: tuple) -> None:
-        lhs, rhs = node[1], node[2]
-        self._visit_var_ref(table, lhs)
-        self._visit_expr(table, rhs)
+        self._visit_lvalue(table, node[1])
+        self._visit_expr(table, node[2])
 
     def _visit_for(self, table: SymbolTable, node: tuple) -> None:
         loop_var = node[1]
-        loop_type = table.lookup(loop_var)
-        if loop_type != "TYPE_INT":
+        if table.lookup(loop_var) != "TYPE_INT":
             raise SemanticError(
-                f"Zmienna petli '{loop_var}' musi byc typu integer (jest {loop_type})"
+                f"Zmienna petli '{loop_var}' musi byc typu integer"
             )
         self._visit_expr(table, node[2])
         self._visit_expr(table, node[3])
         self._visit_stmt(table, node[5])
 
-    def _visit_var_ref(self, table: SymbolTable, node: tuple) -> None:
-        if node[0] != "Var":
-            raise SemanticError(f"Oczekiwano Var, jest {node[0]!r}")
-        table.lookup(node[1])
+    def _visit_lvalue(self, table: SymbolTable, node: tuple) -> None:
+        if node[0] == "Var":
+            table.lookup(node[1])
+        elif node[0] == "Index":
+            self._visit_lvalue(table, node[1])
+            self._visit_expr(table, node[2])
+        else:
+            raise SemanticError(f"lvalue: {node[0]!r}")
+
+    def _visit_call(self, table: SymbolTable, node: tuple) -> None:
+        if node[0] != "Call":
+            raise SemanticError(f"Oczekiwano Call, jest {node[0]!r}")
+        name = node[1]
+        if name not in self._subprogram_names:
+            raise SemanticError(f"Nieznany podprogram '{name}'")
+        for arg in node[2] or []:
+            self._visit_expr(table, arg)
 
     def _visit_expr(self, table: SymbolTable, node: tuple) -> None:
         tag = node[0]
@@ -152,6 +216,12 @@ class _Analyzer:
         elif tag == "BinOp":
             self._visit_expr(table, node[2])
             self._visit_expr(table, node[3])
+        elif tag == "UnaryNot":
+            self._visit_expr(table, node[1])
+        elif tag == "Call":
+            self._visit_call(table, node)
+        elif tag == "Index":
+            self._visit_lvalue(table, node)
         elif tag in ("Int", "Real", "Str", "Bool", "Char"):
             pass
         else:
