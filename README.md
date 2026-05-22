@@ -94,7 +94,7 @@ Interpreter Pythona **sam dodaje** do ścieżki importów folder `src/` przy `py
 
 ### Transpilacja do C i kompilacja
 
-Po poprawnym sparsowaniu emiter zapisuje kod C; na stdout: `Zapisano: …`.
+Po poprawnym sparsowaniu uruchamiana jest **analiza semantyczna** (`semantic.py`), potem emiter zapisuje kod C; na stdout: `Zapisano: …`. Przy błędzie semantycznym (np. niezadeklarowana zmienna) program kończy się kodem **4** i nie tworzy pliku `.c`.
 
 ```bash
 python3 src/main.py --emit-c ścieżka/do/programu.ep
@@ -141,6 +141,7 @@ python3 src/emoji_to_pascal.py ścieżka/do/programu.ep
 |:---|:---|
 | `ModuleNotFoundError: ply` | `pip install -r requirements.txt` |
 | `Blad skladni` / `Blad parsera` | porównaj `.ep` z działającymi przykładami w `examples/` |
+| `Blad semantyczny: Niezadeklarowana zmienna` | zadeklaruj zmienną w sekcji `📦` / `var` przed użyciem |
 | `NotImplementedError` przy `--emit-c` | konstrukcja jeszcze nieobsługiwana w emiterze (np. `test.ep`) |
 | `gcc: command not found` | zainstaluj pakiet z kompilatorem C (np. `build-essential`) |
 | Program „nic nie robi” / zły wynik | czy podajesz liczby na stdin (`printf "5\n" \| ./suma`) |

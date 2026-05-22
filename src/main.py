@@ -94,6 +94,7 @@ def main() -> int:
     if mode == "emit_c":
         from parser import parse_source
         from codegen_c import emit_c
+        from semantic import SemanticError, analyze
 
         try:
             tree = parse_source(data)
@@ -106,6 +107,12 @@ def main() -> int:
         if tree is None:
             print("Blad parsera: pusty wynik")
             return 3
+
+        try:
+            analyze(tree)
+        except SemanticError as exc:
+            print(f"Blad semantyczny: {exc}", file=sys.stderr)
+            return 4
 
         if output_c_path is None:
             output_c_path = Path("output/c") / f"{source_path.stem}.c"
