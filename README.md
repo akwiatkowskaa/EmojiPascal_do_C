@@ -1,205 +1,52 @@
-EmojiPascal – Transpiler języka opartego na Pascalu na język C
+EmojiPascal – transpiler języka opartego na Pascalu na język C
 
-## Dane autorów
-* **Imię i Nazwisko:** Alicja Kwiatkowska 
-  **E-mail:** kwiatkowskaa@student.agh.edu.pl
-* **Imię i Nazwisko:** Dawid Kałucki
-  **E-mail:** dkalucki@student.agh.edu.pl
+## Dane studenta(-ów)
+- Imię i nazwisko: Alicja Kwiatkowska
+- Imię i nazwisko: Dawid Kałucki
 
----
-
-## Szybki start
-
-**Wymagania:** Python 3.10+, kompilator `gcc`, zależności z `requirements.txt`.
-
-
-```bash
-pip install -r requirements.txt
-
-# Suma liczb od 1 do n
-python3 src/main.py --emit-c examples/suma_do_n.ep
-gcc -Wall -o suma output/c/suma_do_n.c
-printf "5\n" | ./suma
-# Oczekiwany wynik: komunikaty + suma 15 (dla n=5)
-
-# Największy wspólny dzielnik (Euklides)
-python3 src/main.py --emit-c examples/najwiekszy_wspolny_dzielnik.ep
-gcc -Wall -o gcd output/c/najwiekszy_wspolny_dzielnik.c
-printf "48\n18\n" | ./gcd
-# Oczekiwany wynik: NWD = 6
-
-# Test gramatyki (case, procedury, petle)
-python3 src/main.py --emit-c examples/test.ep
-gcc -Wall -o test output/c/test.c
-./test
-```
-
-Ścieżka translacji: plik `.ep` → parser (AST) → `codegen_c.py` → plik `.c` → `gcc`. **Nie** trzeba generować pliku `.pas` po drodze.
+## Dane kontaktowe
+- E-mail: kwiatkowskaa@student.agh.edu.pl
+- E-mail: dkalucki@student.agh.edu.pl
 
 ---
 
 ## Założenia programu
 
 ### Ogólne cele programu
-Celem projektu jest stworzenie narzędzia do translacji autorskiego języka opartego na składni Pascala, o nazwie **EmojiPascal**, w którym standardowe słowa kluczowe zostały zastąpione odpowiednimi symbolami Emoji. Projekt skupia się na praktycznej implementacji pełnego procesu konwersji: od odczytania znaków Emoji, przez analizę struktury programu, aż po wygenerowanie gotowego kodu w języku C.
+Celem projektu jest stworzenie narzędzia do translacji autorskiego języka EmojiPascal, w którym słowa kluczowe i część składni zostały zapisane emoji. Program realizuje pełny proces: skanowanie tokenów, analizę składniową, analizę semantyczną oraz wygenerowanie kodu C.
 
 ### Rodzaj translatora
-Program jest **transpilerem** — dokonuje translacji kodu źródłowego w języku **EmojiPascal** na **kod źródłowy w języku C** (język implementacji narzędzia to Python, co opisano poniżej).
+Projekt jest **konwerterem (kompilatorem/transpilerem)**: wejście to program w EmojiPascal (`.ep`), wyjście to program w C (`.c`).
 
 ### Planowany wynik działania programu
-Docelowym wynikiem prac jest **transpiler** języka EmojiPascal do **kodu źródłowego w języku C**, gotowego do kompilacji przy użyciu kompilatora `gcc`.
+Wynikiem działania jest kod C możliwy do kompilacji kompilatorem `gcc`.
 
-**Stan realizacji (bieżący etap):** działa pełna ścieżka **lexer → parser (AST) → analiza semantyczna → emiter C** (`codegen_c.py`, flaga `--emit-c`). Programy `suma_do_n.ep`, `najwiekszy_wspolny_dzielnik.ep` i `test.ep` można wygenerować do C, skompilować (`gcc`) i uruchomić.
+### Planowany język implementacji
+Implementacja: **Python 3.10+**.
 
-Osobno dostępny **skrypt pomocniczy** `emoji_to_pascal.py`: zamiana emoji na słowa Pascala i zapis `.pas` — to **podstawienie tekstowe**, nie etap zmiany do C.
-
-| Plik w `examples/` | `--emit-c` + `gcc` + uruchomienie |
-|:---|:---:|
-| `suma_do_n.ep` | tak |
-| `najwiekszy_wspolny_dzielnik.ep` | tak |
-| `test.ep` | tak (const, tablice, procedury/funkcje, `case`, `repeat`, logika) |
-
-### Język implementacji i środowisko
-* **Python:** wersja **3.10 lub nowsza** (zalecana aktualna stabilna wersja interpretera).
-* **Biblioteka PLY** (Python Lex–Yacc) — generator analizatorów leksykalnych i składniowych w oparciu o tablice **LALR**.
-
-Instalacja zależności Pythona dla narzędzi w `src/`:
-
-```bash
-pip install -r requirements.txt
-```
-
-W pliku [`requirements.txt`](./requirements.txt) wymienione są pakiety zewnętrzne projektu. 
-
-### Sposób realizacji skanera i parsera
-W projekcie wykorzystywana jest biblioteka **PLY (Python Lex-Yacc)** — narzędzie implementujące mechanizmy analogiczne do Lex i Yacc w języku Python, umożliwiające formalne zdefiniowanie tokenów oraz reguł gramatyki.
-
-PLY umożliwia w szczególności:
-- implementację analizatora leksykalnego (lexer),
-- implementację analizatora składniowego (parser),
-- obsługę znaków Unicode (w tym emoji).
-
----
-
-## Uruchomienie narzędzi
-
-Polecenia wywołuj z **katalogu głównego repozytorium**. Ścieżkę do pliku `.ep` podaj względem tego katalogu (np. `examples/suma_do_n.ep`).
-
-
-### Dwie niezależne ścieżki z pliku `.ep`
-
-| Ścieżka | Narzędzie | Wynik |
-|:---|:---|:---|
-| **Główna (transpiler)** | `main.py --emit-c` | `output/c/*.c` → kompilacja `gcc` |
-| **Pomocnicza (podgląd)** | `emoji_to_pascal.py` | `output/pascal/*.pas` (podstawienie emoji, bez AST) |
-
-Łańcuch **`.ep` → `.pas` → `.c` nie istnieje** — do C idzie wyłącznie przez AST.
-
-### Transpilacja do C i kompilacja
-
-Po poprawnym sparsowaniu uruchamiana jest **analiza semantyczna** (`semantic.py`), potem emiter zapisuje kod C; na stdout: `Zapisano: …`.  
-Przy błędzie semantycznym (np. niezadeklarowana zmienna) program kończy się kodem **4**, a przy nieobsługiwanym jeszcze fragmencie AST w emiterze — kodem **5**. W obu przypadkach plik `.c` nie jest tworzony.
-
-```bash
-python3 src/main.py --emit-c ścieżka/do/programu.ep
-gcc -Wall -o program output/c/nazwa_pliku.c
-./program
-```
-
-* **Domyślny zapis:** `output/c/<nazwa_bez_rozszerzenia>.c`
-* **Jawna ścieżka wyjściowa:** `python3 src/main.py --emit-c ścieżka/wyjście.c wejście.ep`
-
-Programy z wejściem z klawiatury (`scanf`) uruchamiaj z danymi na stdin, np. `printf "5\n" | ./suma`.
-
-Przy starcie parsera mogą pojawić się ostrzeżenia PLY o nieużywanym tokenie `RECORD` — można je zignorować.
-
-### Tryby `main.py` (diagnostyka)
-
-| Polecenie | Efekt | Plik wyjściowy |
-|:---|:---|:---|
-| `python3 src/main.py plik.ep` | lista tokenów na stdout | — |
-| `python3 src/main.py --parse plik.ep` | drzewo AST na stdout | — |
-| `python3 src/main.py --emit-c plik.ep` | generacja kodu C | `output/c/…` |
-
-```bash
-python3 src/main.py examples/suma_do_n.ep
-python3 src/main.py --parse examples/suma_do_n.ep
-```
-
-Przykłady: katalog [`examples/`](./examples/).
-
-### Eksport do pliku `.pas` (opcjonalnie)
-
-Mapowanie symboli emoji → słowa Pascala (`src/emoji_language.py`).
-
-```bash
-python3 src/emoji_to_pascal.py ścieżka/do/programu.ep
-```
-
-* **Domyślnie:** `output/pascal/<nazwa>.pas`
-* **Jawnie:** `python3 src/emoji_to_pascal.py wejście.ep ścieżka/wyjście.pas`
-
-### Rozwiązywanie problemów
-
-| Problem | Co zrobić |
-|:---|:---|
-| `ModuleNotFoundError: ply` | `pip install -r requirements.txt` |
-| `Blad skladni` / `Blad parsera` | porównaj `.ep` z działającymi przykładami w `examples/` |
-| `Blad semantyczny: Niezadeklarowana zmienna` | zadeklaruj zmienną w sekcji `📦` / `var` przed użyciem |
-| `Blad emitera C: nieobslugiwany element AST (...)` przy `--emit-c` | konstrukcja jest jeszcze nieobsługiwana w `codegen_c.py`; można sprawdzić sekcję „Pokrycie transpilera” |
-| `gcc: command not found` | zainstaluj pakiet z kompilatorem C (np. `build-essential`) |
-| Program „nic nie robi” / zły wynik | czy podajesz liczby na stdin (`printf "5\n" \| ./suma`) |
+### Sposób realizacji skanera/parsera
+Skaner i parser są wykonane z użyciem generatora **PLY (Python Lex-Yacc)**:
+- skaner: `src/lexer.py`,
+- parser: `src/parser.py`.
 
 ---
 
 ## Opis tokenów
-Pełna specyfikacja mapowania symboli Emoji na tokeny znajduje się w osobnym pliku dokumentacji: [Dokumentacja tokenów](./docs/tokeny.md).
 
-### Przykładowe mapowania:
-| Słowo kluczowe | Emoji | Opis |
+Pełny opis tokenów jest w pliku [`docs/tokeny.md`](./docs/tokeny.md).
+
+Przykładowe tokeny:
+
+| Nazwa tokenu | Emoji / zapis | Opis |
 |:---|:---:|:---|
-| `PROGRAM` | `🏁` | Początek programu |
-| `IF` | `❓` | Instrukcja warunkowa |
-| `ASSIGN` | `⬅️` | Operacja przypisania |
-| `LPAREN` | `🤜` | Lewy nawias |
-
----
-
-## Przykładowy program
-
-Poniżej przedstawiono przykładowy program w języku **EmojiPascal** zapisany w pliku o rozszerzeniu `.ep`.
-
-📄 **Plik:** `najwiekszy_wspolny_dzielnik.ep`
-
-Program przyjmuje od użytkownika dwie liczby całkowite, znajduje ich największy wspólny dzielnik, a następnie wypisuje wynik:
-
-```ep
-🏁 NajwiekszyWspolnyDzielnik 🔹
-
-📦
-    a 📍 🔢 🔹
-    b 📍 🔢 🔹
-    temp 📍 🔢 🔹
-
-🚦
-    🖨️ 🤜 "Podaj pierwsza liczbe: " 🤛 🔹
-    📥 🤜 a 🤛 🔹
-    🖨️ 🤜 "Podaj druga liczbe: " 🤛 🔹
-    📥 🤜 b 🤛 🔹
-
-    🔁 b ❌ 0️⃣ ▶️
-        🚦
-            temp ⬅️ b 🔹
-            b ⬅️ a ✂️ b 🔹
-            a ⬅️ temp 🔹
-        🛑 🔹
-
-    🖨️ 🤜 "Najwiekszy wspolny dzielnik to: " 🤛 🔹
-    🖨️ 🤜 a 🤛 🔹
-🛑 🔚
-```
-
-Uruchomienie tego programu po transpilacji: [Szybki start](#szybki-start) (sekcja NWD).
+| `PROGRAM` | `🏁` | początek programu |
+| `VAR` | `📦` | sekcja zmiennych |
+| `BEGIN` | `🚦` | początek bloku |
+| `END` | `🛑` | koniec bloku |
+| `ASSIGN` | `⬅️` | przypisanie |
+| `SEMICOLON` | `🔹` | separator instrukcji |
+| `TYPE_INT` | `🔢` | typ całkowity |
+| `LITERAL_BOOL` | `👍` / `👎` | stałe logiczne |
 
 ---
 
@@ -385,49 +232,126 @@ Poniżej zestawiono **docelową** specyfikację składni w notacji zbliżonej do
 ```
 
 ---
+### Tekst gramatyki w notacji generatora parsera (PLY / Yacc-style)
 
-## Testy automatyczne
+Pełna gramatyka parsera jest zapisana w `src/parser.py` jako reguły `p_*`, np.:
 
-Z katalogu głównego repozytorium (wymaga `gcc` w PATH dla testów integracyjnych):
+```python
+def p_program(p):
+    "program : PROGRAM IDENTIFIER SEMICOLON block DOT"
 
-```bash
-python3 -m unittest discover -s tests -v
+def p_compound_stmt(p):
+    "compound_stmt : BEGIN stmt_list_opt END"
+
+def p_for_stmt_to(p):
+    "for_stmt : FOR IDENTIFIER ASSIGN expr TO expr DO stmt"
 ```
 
-* `tests/test_parse_examples.py` — parser akceptuje wszystkie pliki `examples/*.ep` (oprócz `bad_*.ep`).
-* `tests/test_emit_integration.py` — `--emit-c`, kompilacja, uruchomienie `suma_do_n` / NWD / `test.ep`; błąd semantyczny dla `bad_niezadeklarowana.ep`.
+---
 
-## Skrypt demo
+## Informacje o stosowanych generatorach skanerów/parserów, pakietach zewnętrznych
 
-```bash
-chmod +x scripts/demo.sh
-./scripts/demo.sh
+- Generator skanera/parsera: **PLY (Python Lex-Yacc)**
+- Pakiety zewnętrzne: `requirements.txt`
+- Instalacja pakietów: `pip install -r requirements.txt`
+- Moduły projektu:
+  - `src/lexer.py` – skaner,
+  - `src/parser.py` – parser,
+  - `src/semantic.py` – analiza semantyczna,
+  - `src/codegen_c.py` – emiter kodu C,
+  - `src/emoji_to_pascal.py` – konwersja tekstowa emoji -> Pascal.
+
+---
+
+## Krótka instrukcja obsługi
+
+Dostępne tryby:
+
+- `python3 src/main.py <plik.ep>` – tokenizacja (lista tokenów na stdout),
+- `python3 src/main.py --parse <plik.ep>` – AST (druk drzewa na stdout),
+- `python3 src/main.py --emit-c <plik.ep> [wyjscie.c]` – generacja pliku C.
+
+Domyślne lokalizacje wyników:
+
+- C: `output/c/<nazwa>.c`
+- Pascal (konwersja tekstowa): `output/pascal/<nazwa>.pas`
+
+---
+
+## Przykład użycia
+
+Przykład dla programu `examples/suma_do_n.ep`.
+
+### 1) Fragment wejścia EmojiPascal (`.ep`)
+
+```ep
+🏁 SumaDoN 🔹
+📦
+    n 📍 🔢 🔹
+    i 📍 🔢 🔹
+    suma 📍 🔢 🔹
+🚦
+    suma ⬅️ 0️⃣ 🔹
+    🔂 i ⬅️ 1️⃣ ⬆️ n ▶️
+        suma ⬅️ suma ➕ i 🔹
+    🖨️ 🤜 suma 🤛 🔹
+🛑 🔚
 ```
 
-Uruchamia po kolei trzy przykłady z [Szybki start](#szybki-start) i wypisuje wyniki na stdout.
+### 2) Jak wygląda wynik konwersji emoji -> pascal (`output/pascal/suma_do_n.pas`)
 
-## Pokrycie transpilera (EP → C)
+```pascal
+program SumaDoN ;
+var
+    n : integer ;
+    i : integer ;
+    suma : integer ;
+begin
+    suma := 0 ;
+    for i := 1 to n do
+        suma := suma + i ;
+    writeln ( suma ) ;
+end .
+```
 
-| Konstrukcja | Status |
-|:---|:---:|
-| `program`, `var`, `begin`/`end` | tak |
-| `const` | tak (`#define`) |
-| `integer`, przypisania, wyrażenia `+−*/%` | tak |
-| `if` / `else`, `while`, `for` / `to` / `downto` | tak |
-| `repeat` / `until`, `case` / `of` | tak |
-| `print`, `input` (`printf` / `scanf`) | tak |
-| `boolean`, `and` / `or` / `not` | tak |
-| tablice `array[low..high]` | tak |
-| procedury / funkcje, wywołania | tak |
-| `record`, `real`, `char`, `CAST`, `BYREF` | nie (planowane rozszerzenia) |
+### 3) Jak wygląda wynik transpilacji do C (`output/c/suma_do_n.c`)
 
-Szczegóły tokenów poza zakresem: [docs/tokeny.md](./docs/tokeny.md) (sekcja 7).
+```c
+#include <stdio.h>
 
-## Struktura projektu
-* **`/src`** — `lexer.py`, `parser.py`, `codegen_c.py`, `semantic.py`, `emoji_language.py`, `emoji_to_pascal.py`, `main.py`.
-* **`/tests`** — testy `unittest` (parse, emit, semantyka).
-* **`/scripts`** — `demo.sh` (demo wszystkich przykładów).
-* **`/docs`** — dokumentacja techniczna (m.in. [tokeny](./docs/tokeny.md)).
-* **`/examples`** — programy `.ep` (źródła do testów transpilera).
-* **`/output/c`** — wygenerowane pliki `.c` (`--emit-c`); można commitować jako referencję lub generować lokalnie.
-* **`/output/pascal`** — wygenerowane `.pas` (`emoji_to_pascal.py`), niezależnie od ścieżki do C.
+/* Program: SumaDoN */
+int main(void) {
+    int n;
+    int i;
+    int suma;
+    printf("Podaj n: ");
+    scanf("%d", &n);
+    suma = 0;
+    for (i = 1; i <= n; i++) {
+        suma = (suma + i);
+    }
+    printf("Suma od 1 do n: ");
+    printf("%d\\n", suma);
+    return 0;
+}
+```
+
+### 4) Jak wygląda wynik uruchomienia (dla `n=5`)
+
+```text
+Podaj n: 5
+Suma od 1 do n:
+15
+```
+
+---
+
+
+### Struktura repozytorium
+
+- `src/` – implementacja narzędzia,
+- `docs/` – dokumentacja,
+- `examples/` – programy wejściowe `.ep`,
+- `output/c/` – wygenerowane pliki C,
+- `output/pascal/` – pliki Pascal z konwersji tekstowej,
+- `tests/` – testy.
