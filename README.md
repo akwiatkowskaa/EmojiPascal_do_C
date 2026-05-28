@@ -12,7 +12,6 @@ EmojiPascal – Transpiler języka opartego na Pascalu na język C
 
 **Wymagania:** Python 3.10+, kompilator `gcc`, zależności z `requirements.txt`.
 
-Wszystkie poniższe polecenia uruchamiaj z **katalogu głównego repozytorium** (tam, gdzie leżą `src/` i `examples/`).
 
 ```bash
 pip install -r requirements.txt
@@ -50,9 +49,9 @@ Program jest **transpilerem** — dokonuje translacji kodu źródłowego w języ
 ### Planowany wynik działania programu
 Docelowym wynikiem prac jest **transpiler** języka EmojiPascal do **kodu źródłowego w języku C**, gotowego do kompilacji przy użyciu kompilatora `gcc`.
 
-**Stan realizacji (bieżący etap):** działa pełna ścieżka **lexer → parser (AST) → analiza semantyczna → emiter C** (`codegen_c.py`, flaga `--emit-c`). Programy `suma_do_n.ep`, `najwiekszy_wspolny_dzielnik.ep` i `test.ep` można wygenerować do C, skompilować (`gcc`) i uruchomić — patrz [Szybki start](#szybki-start).
+**Stan realizacji (bieżący etap):** działa pełna ścieżka **lexer → parser (AST) → analiza semantyczna → emiter C** (`codegen_c.py`, flaga `--emit-c`). Programy `suma_do_n.ep`, `najwiekszy_wspolny_dzielnik.ep` i `test.ep` można wygenerować do C, skompilować (`gcc`) i uruchomić.
 
-Osobno dostępny **skrypt pomocniczy** `emoji_to_pascal.py`: zamiana emoji na słowa Pascala i zapis `.pas` — to **podstawienie tekstowe**, nie etap pipeline’u do C.
+Osobno dostępny **skrypt pomocniczy** `emoji_to_pascal.py`: zamiana emoji na słowa Pascala i zapis `.pas` — to **podstawienie tekstowe**, nie etap zmiany do C.
 
 | Plik w `examples/` | `--emit-c` + `gcc` + uruchomienie |
 |:---|:---:|
@@ -86,7 +85,6 @@ PLY umożliwia w szczególności:
 
 Polecenia wywołuj z **katalogu głównego repozytorium**. Ścieżkę do pliku `.ep` podaj względem tego katalogu (np. `examples/suma_do_n.ep`).
 
-Interpreter Pythona **sam dodaje** do ścieżki importów folder `src/` przy `python3 src/main.py` — importy `lexer`, `parser`, `codegen_c` działają **bez** `PYTHONPATH`.
 
 ### Dwie niezależne ścieżki z pliku `.ep`
 
@@ -99,7 +97,8 @@ Interpreter Pythona **sam dodaje** do ścieżki importów folder `src/` przy `py
 
 ### Transpilacja do C i kompilacja
 
-Po poprawnym sparsowaniu uruchamiana jest **analiza semantyczna** (`semantic.py`), potem emiter zapisuje kod C; na stdout: `Zapisano: …`. Przy błędzie semantycznym (np. niezadeklarowana zmienna) program kończy się kodem **4** i nie tworzy pliku `.c`.
+Po poprawnym sparsowaniu uruchamiana jest **analiza semantyczna** (`semantic.py`), potem emiter zapisuje kod C; na stdout: `Zapisano: …`.  
+Przy błędzie semantycznym (np. niezadeklarowana zmienna) program kończy się kodem **4**, a przy nieobsługiwanym jeszcze fragmencie AST w emiterze — kodem **5**. W obu przypadkach plik `.c` nie jest tworzony.
 
 ```bash
 python3 src/main.py --emit-c ścieżka/do/programu.ep
@@ -110,7 +109,7 @@ gcc -Wall -o program output/c/nazwa_pliku.c
 * **Domyślny zapis:** `output/c/<nazwa_bez_rozszerzenia>.c`
 * **Jawna ścieżka wyjściowa:** `python3 src/main.py --emit-c ścieżka/wyjście.c wejście.ep`
 
-Programy z wejściem z klawiatury (`scanf`) uruchamiaj z danymi na stdin, np. `printf "5\n" | ./suma` — szczegóły w [Szybki start](#szybki-start).
+Programy z wejściem z klawiatury (`scanf`) uruchamiaj z danymi na stdin, np. `printf "5\n" | ./suma`.
 
 Przy starcie parsera mogą pojawić się ostrzeżenia PLY o nieużywanym tokenie `RECORD` — można je zignorować.
 
@@ -131,7 +130,7 @@ Przykłady: katalog [`examples/`](./examples/).
 
 ### Eksport do pliku `.pas` (opcjonalnie)
 
-Mapowanie symboli emoji → słowa Pascala (`src/emoji_language.py`). **Nie** korzysta z AST i **nie** służy do budowy pliku `.c`.
+Mapowanie symboli emoji → słowa Pascala (`src/emoji_language.py`).
 
 ```bash
 python3 src/emoji_to_pascal.py ścieżka/do/programu.ep
@@ -147,7 +146,7 @@ python3 src/emoji_to_pascal.py ścieżka/do/programu.ep
 | `ModuleNotFoundError: ply` | `pip install -r requirements.txt` |
 | `Blad skladni` / `Blad parsera` | porównaj `.ep` z działającymi przykładami w `examples/` |
 | `Blad semantyczny: Niezadeklarowana zmienna` | zadeklaruj zmienną w sekcji `📦` / `var` przed użyciem |
-| `NotImplementedError` przy `--emit-c` | konstrukcja jeszcze nieobsługiwana w emiterze (np. `test.ep`) |
+| `Blad emitera C: nieobslugiwany element AST (...)` przy `--emit-c` | konstrukcja jest jeszcze nieobsługiwana w `codegen_c.py`; można sprawdzić sekcję „Pokrycie transpilera” |
 | `gcc: command not found` | zainstaluj pakiet z kompilatorem C (np. `build-essential`) |
 | Program „nic nie robi” / zły wynik | czy podajesz liczby na stdin (`printf "5\n" \| ./suma`) |
 

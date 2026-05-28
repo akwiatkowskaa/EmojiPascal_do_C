@@ -71,7 +71,11 @@ def main() -> int:
         print(f"Brak pliku: {source_path}")
         return 1
 
-    data = source_path.read_text(encoding="utf-8")
+    try:
+        data = source_path.read_text(encoding="utf-8")
+    except OSError as exc:
+        print(f"Blad odczytu pliku: {exc}", file=sys.stderr)
+        return 1
 
     if mode == "parse":
         from parser import parse_source
@@ -93,7 +97,7 @@ def main() -> int:
 
     if mode == "emit_c":
         from parser import parse_source
-        from codegen_c import emit_c
+        from codegen_c import NotImplementedEmit, emit_c
         from semantic import SemanticError, analyze
 
         try:
@@ -117,8 +121,24 @@ def main() -> int:
         if output_c_path is None:
             output_c_path = Path("output/c") / f"{source_path.stem}.c"
 
-        output_c_path.parent.mkdir(parents=True, exist_ok=True)
-        output_c_path.write_text(emit_c(tree), encoding="utf-8")
+        try:
+            c_code = emit_c(tree)
+        except NotImplementedEmit as exc:
+            print(
+                f"Blad emitera C: nieobslugiwany element AST ({exc})",
+                file=sys.stderr,
+            )
+            return 5
+        except Exception as exc:
+            print(f"Blad emitera C: {exc}", file=sys.stderr)
+            return 5
+
+        try:
+            output_c_path.parent.mkdir(parents=True, exist_ok=True)
+            output_c_path.write_text(c_code, encoding="utf-8")
+        except OSError as exc:
+            print(f"Blad zapisu pliku C: {exc}", file=sys.stderr)
+            return 1
         print(f"Zapisano: {output_c_path}")
         return 0
 
