@@ -1,6 +1,6 @@
 EmojiPascal – transpiler języka opartego na Pascalu na język C
 
-## Dane studenta(-ów)
+## Dane studentów
 - Imię i nazwisko: Alicja Kwiatkowska
 - Imię i nazwisko: Dawid Kałucki
 
