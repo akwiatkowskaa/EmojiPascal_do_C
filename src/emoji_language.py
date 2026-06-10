@@ -7,6 +7,7 @@ EMOJI_DEFINITIONS: List[Tuple[str, str, str]] = [
     # struktura
     ("🏁", "PROGRAM", "program"),
     ("📌", "CONST", "const"),
+    ("📐", "TYPE", "type"),
     ("📦", "VAR", "var"),
     ("⚙️", "FUNCTION", "function"),
     ("🔧", "PROCEDURE", "procedure"),
@@ -37,6 +38,10 @@ EMOJI_DEFINITIONS: List[Tuple[str, str, str]] = [
     ("🔡", "TYPE_CHAR", "char"),
     ("📚", "ARRAY", "array"),
     ("🧱", "RECORD", "record"),
+    ("🧺", "SET", "set"),
+    ("📥➡️", "IN", "in"),
+    ("🗃️", "LBRACKET", "["),
+    ("🗄️", "RBRACKET", "]"),
     # operatory
     ("⬅️", "ASSIGN", ":="),
     ("✨", "CAST", ""),

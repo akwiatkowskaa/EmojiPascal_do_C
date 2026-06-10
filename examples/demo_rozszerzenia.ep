@@ -5,7 +5,11 @@
     MAX 🟰 1️⃣0️⃣0️⃣ 🔹
     ETYKIETA 🟰 "demo" 🔹
 
-// Stare + nowe: var (int, bool, string, tablica, real, char, record)
+// Ostateczne: enum + set
+📐
+    Kolor 🟰 🤜 Czerwony 📎 Zielony 📎 Niebieski 🤛 🔹
+
+// Stare + nowe: var (int, bool, string, tablica, real, char, record, enum, set)
 📦
     i 📍 🔢 🔹
     suma 📍 🔢 🔹
@@ -19,6 +23,8 @@
         x 📍 🔢 🔹
         y 📍 🔢 🔹
     🛑 🔹
+    barwy 📍 🧺 🧾 Kolor 🔹
+    aktywny 📍 Kolor 🔹
 
 // Nowe: BYREF (📤)
 🔧 Zwieksz 🤜 📤 v 📍 🔢 🤛 🔹
@@ -64,7 +70,19 @@
         suma ⬅️ suma ➖ 1️⃣ 🔹
     🔂▶️ suma 🟰 5️⃣0️⃣ 🔹
 
-    // Stare: case
+    // Ostateczne: set — literał, suma zbiorów, IN
+    barwy ⬅️ 🗃️ Czerwony 📎 Niebieski 🗄️ 🔹
+    barwy ⬅️ barwy ➕ 🗃️ Zielony 🗄️ 🔹
+    aktywny ⬅️ Czerwony 🔹
+    ❓ Czerwony 📥➡️ barwy ➡️ ok ⬅️ 👍 🙅 ok ⬅️ 👎 🔹
+
+    // Stare: case (także etykieta enum)
+    🧭 aktywny 🧾
+        Czerwony ➡️ suma ⬅️ suma ➕ 1️⃣ 🔹
+        Zielony ➡️ suma ⬅️ suma ➕ 2️⃣ 🔹
+        🙅 suma ⬅️ suma 🔹
+    🛑 🔹
+
     🧭 punkt 💠 x 🧾
         1️⃣0️⃣ ➡️ punkt 💠 y ⬅️ punkt 💠 y ➕ 1️⃣ 🔹
         2️⃣0️⃣ ➡️ punkt 💠 y ⬅️ punkt 💠 y ➖ 1️⃣ 🔹
@@ -79,6 +97,8 @@
     🖨️ 🤜 znak 🤛 🔹
     🖨️ 🤜 punkt 💠 x 🤛 🔹
     🖨️ 🤜 punkt 💠 y 🤛 🔹
+    🖨️ 🤜 barwy 🤛 🔹
+    🖨️ 🤜 aktywny 🤛 🔹
     sr ⬅️ Srednia 🤜 punkt 💠 x 📎 punkt 💠 y 🤛 🔹
     🖨️ 🤜 sr 🤛 🔹
 🛑 🔚

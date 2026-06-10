@@ -59,7 +59,7 @@ Poniżej zestawiono **docelową** specyfikację składni w notacji zbliżonej do
 // ==========================================
 <program> ::= 🏁 <id> 🔹 <block> 🔚
 
-<block> ::= <const_section_opt> <var_section_opt> <subprogram_decls_opt> 🚦 <stmt_list_opt> 🛑
+<block> ::= <const_section_opt> <type_section_opt> <var_section_opt> <subprogram_decls_opt> 🚦 <stmt_list_opt> 🛑
 
 // ==========================================
 // DEKLARACJE
@@ -68,6 +68,13 @@ Poniżej zestawiono **docelową** specyfikację składni w notacji zbliżonej do
 <const_section> ::= 📌 <const_decl_list>
 <const_decl_list> ::= <const_decl> 🔹 <const_decl_list> | <const_decl> 🔹
 <const_decl> ::= <id> 🟰 <const_value>
+
+<type_section_opt> ::= <type_section> | ε
+<type_section> ::= 📐 <type_decl_list>
+<type_decl_list> ::= <type_decl> 🔹 <type_decl_list> | <type_decl> 🔹
+<type_decl> ::= <id> 🟰 🤜 <enum_id_list> 🤛
+
+<enum_id_list> ::= <id> | <id> 📎 <enum_id_list>
 
 <var_section_opt> ::= <var_section> | ε
 <var_section> ::= 📦 <var_decl_list>
@@ -78,9 +85,10 @@ Poniżej zestawiono **docelową** specyfikację składni w notacji zbliżonej do
 
 
 // --- typy ---
-<type> ::= 🔢 | 🌊 | 🧵 | ✅ | 🔡
+<type> ::= 🔢 | 🌊 | 🧵 | ✅ | 🔡 | <id>
          | 📚 🤜 <const_int> ↔️ <const_int> 🤛 🧾 <type>
          | 🧱 🚦 <field_decl_list> 🛑
+         | 🧺 🧾 <id>
 
 <field_decl_list> ::= <field_decl> 🔹 <field_decl_list> | <field_decl> 🔹
 <field_decl> ::= <id_list> 📍 <type>
@@ -261,6 +269,9 @@ Rozszerzenia spoza podstawowego zakresu wdrazamy stopniowo (szczegoly: [`docs/to
 | parametry `BYREF` (`📤`) | tak |
 | typ `record` (`🧱`, `typedef struct` w C) | tak |
 | dostep do pol rekordu (`💠`, `var.pole`) | tak |
+| typ wyliczeniowy `enum` (`📐`, `typedef enum` w C) | tak |
+| zbiory `set of` (`🧺`, maska bitowa w C) | tak |
+| przynaleznosc `in` (`📥➡️`) | tak |
 
 ---
 

@@ -92,6 +92,36 @@ class TestEmitIntegration(unittest.TestCase):
         self.assertEqual(run.returncode, 0, run.stderr)
         self.assertIn("10", run.stdout)
 
+    def test_enum_and_set(self) -> None:
+        ep = """🏁 EnumSetTest 🔹
+📐
+    Kolor 🟰 🤜 Czerwony 📎 Zielony 🤛 🔹
+📦
+    zestaw 📍 🧺 🧾 Kolor 🔹
+🚦
+    zestaw ⬅️ 🗃️ Czerwony 📎 Zielony 🗄️ 🔹
+    ❓ Czerwony 📥➡️ zestaw ➡️ 🖨️ 🤜 1️⃣ 🤛 🙅 🖨️ 🤜 0️⃣ 🤛 🔹
+🛑 🔚
+"""
+        out_dir = Path(tempfile.mkdtemp(prefix="emojipascal_enumset_"))
+        self.addCleanup(lambda: shutil.rmtree(out_dir, ignore_errors=True))
+        ep_path = out_dir / "enumset.ep"
+        ep_path.write_text(ep, encoding="utf-8")
+        c_path = out_dir / "enumset.c"
+        emit = _run(
+            [sys.executable, "src/main.py", "--emit-c", str(c_path), str(ep_path)]
+        )
+        self.assertEqual(emit.returncode, 0, emit.stderr or emit.stdout)
+        c_src = c_path.read_text(encoding="utf-8")
+        self.assertIn("typedef enum", c_src)
+        self.assertIn("Set_Kolor", c_src)
+        binary = out_dir / "enumset_bin"
+        build = _run(["gcc", "-Wall", "-o", str(binary), str(c_path)])
+        self.assertEqual(build.returncode, 0, build.stderr)
+        run = _run([str(binary)])
+        self.assertEqual(run.returncode, 0, run.stderr)
+        self.assertIn("1", run.stdout)
+
     def test_record_fields(self) -> None:
         ep = """🏁 RecordTest 🔹
 📦

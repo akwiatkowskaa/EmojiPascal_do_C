@@ -13,6 +13,7 @@ from emoji_language import (
 tokens = [
     "PROGRAM",
     "CONST",
+    "TYPE",
     "VAR",
     "FUNCTION",
     "PROCEDURE",
@@ -41,6 +42,10 @@ tokens = [
     "TYPE_CHAR",
     "ARRAY",
     "RECORD",
+    "SET",
+    "IN",
+    "LBRACKET",
+    "RBRACKET",
     "ASSIGN",
     "CAST",
     "PLUS",

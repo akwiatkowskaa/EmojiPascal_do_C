@@ -1,6 +1,9 @@
 #include <stdio.h>
 
 /* Program: DemoRozszerzenia */
+typedef enum { Czerwony = 0, Zielony = 1, Niebieski = 2 } Kolor;
+typedef unsigned int Set_Kolor;
+
 typedef struct {
     int x;
     int y;
@@ -26,6 +29,8 @@ int main(void) {
     char znak;
     int liczby[3];
     Record_1 punkt;
+    Set_Kolor barwy;
+    Kolor aktywny;
     
     suma = 0;
     ok = 1;
@@ -50,6 +55,25 @@ int main(void) {
     do {
         suma = (suma - 1);
     } while (!((suma == 50)));
+    barwy = (1u << Czerwony) | (1u << Niebieski);
+    barwy = (barwy | (1u << Zielony));
+    aktywny = Czerwony;
+    if (((barwy & (1u << Czerwony)) != 0)) {
+        ok = 1;
+    } else {
+        ok = 0;
+    }
+    switch (aktywny) {
+    case Czerwony:
+        suma = (suma + 1);
+        break;
+    case Zielony:
+        suma = (suma + 2);
+        break;
+    default:
+        suma = suma;
+        break;
+    }
     switch (punkt.x) {
     case 10:
         punkt.y = (punkt.y + 1);
@@ -68,6 +92,8 @@ int main(void) {
     printf("%c\n", znak);
     printf("%d\n", punkt.x);
     printf("%d\n", punkt.y);
+    printf("%u\n", barwy);
+    printf("%d\n", aktywny);
     sr = Srednia(punkt.x, punkt.y);
     printf("%lf\n", sr);
     return 0;

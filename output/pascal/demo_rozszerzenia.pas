@@ -5,7 +5,11 @@ const
     MAX = 100 ;
     ETYKIETA = "demo" ;
 
-// Stare + nowe: var (int, bool, string, tablica, real, char, record)
+// Ostateczne: enum + set
+type
+    Kolor = ( Czerwony , Zielony , Niebieski ) ;
+
+// Stare + nowe: var (int, bool, string, tablica, real, char, record, enum, set)
 var
     i : integer ;
     suma : integer ;
@@ -19,6 +23,8 @@ var
         x : integer ;
         y : integer ;
     end ;
+    barwy : set of Kolor ;
+    aktywny : Kolor ;
 
 // Nowe: BYREF (var)
 procedure Zwieksz ( var v : integer ) ;
@@ -64,7 +70,19 @@ begin
         suma := suma - 1 ;
     until suma = 50 ;
 
-    // Stare: case
+    // Ostateczne: set — literał, suma zbiorów, IN
+    barwy := [ Czerwony , Niebieski ] ;
+    barwy := barwy + [ Zielony ] ;
+    aktywny := Czerwony ;
+    if Czerwony in barwy then ok := true else ok := false ;
+
+    // Stare: case (także etykieta enum)
+    case aktywny of
+        Czerwony then suma := suma + 1 ;
+        Zielony then suma := suma + 2 ;
+        else suma := suma ;
+    end ;
+
     case punkt . x of
         10 then punkt . y := punkt . y + 1 ;
         20 then punkt . y := punkt . y - 1 ;
@@ -79,6 +97,8 @@ begin
     writeln ( znak ) ;
     writeln ( punkt . x ) ;
     writeln ( punkt . y ) ;
+    writeln ( barwy ) ;
+    writeln ( aktywny ) ;
     sr := Srednia ( punkt . x , punkt . y ) ;
     writeln ( sr ) ;
 end .

@@ -17,6 +17,9 @@ class EmitContext:
         self.subprogram_param_byref: dict[str, list[bool]] = {}
         self.record_field_types: dict[str, dict[str, str]] = {}
         self._record_typedef_cache: dict[tuple[tuple[str, str], ...], str] = {}
+        self.enum_defs: dict[str, list[str]] = {}
+        self.enum_member_of: dict[str, str] = {}
+        self.set_var_enum: dict[str, str] = {}
 
     def emit_line(self, text: str) -> None:
         pad = "    " * self.indent_level
@@ -39,16 +42,22 @@ class EmitContext:
         self.emit_line("")
         self.emit_line(f"/* Program: {program_name} */")
 
+        for enum_line in self._collect_enum_typedefs(block):
+            self.emit_line(enum_line)
+        if self.enum_defs:
+            self.emit_line("")
+
         for typedef_line in self._collect_record_typedefs(block):
             self.emit_line(typedef_line)
         if self._record_typedef_cache:
             self.emit_line("")
 
-        const_section, var_section, subprograms, compound = (
+        const_section, _type_section, var_section, subprograms, compound = (
             block[1],
             block[2],
             block[3],
             block[4],
+            block[5],
         )
         for decl in const_section:
             self.emit_const_decl(decl)
@@ -209,11 +218,38 @@ class EmitContext:
                 if line:
                     lines.append(line)
 
-        add_from_var_section(block[2])
-        for sub in block[3]:
+        add_from_var_section(block[3])
+        for sub in block[4]:
             inner = sub[3] if sub[0] == "Procedure" else sub[4]
             add_from_var_section(inner[1])
         return lines
+
+    def _collect_enum_typedefs(self, block: tuple) -> list[str]:
+        lines: list[str] = []
+        for decl in block[2]:
+            if decl[0] != "TypeEnumDecl":
+                continue
+            enum_name, members = decl[1], decl[2]
+            self.enum_defs[enum_name] = list(members)
+            for member in members:
+                self.enum_member_of[member] = enum_name
+            body = ", ".join(f"{m} = {i}" for i, m in enumerate(members))
+            lines.append(f"typedef enum {{ {body} }} {enum_name};")
+            lines.append(f"typedef unsigned int Set_{enum_name};")
+        return lines
+
+    def _set_c_type(self, enum_name: str) -> str:
+        return f"Set_{enum_name}"
+
+    def _emit_set_literal(self, members: list[str], enum_name: str | None = None) -> str:
+        if not members:
+            return "0u"
+        if enum_name is None:
+            enum_name = self.enum_member_of[members[0]]
+        parts = [f"(1u << {member})" for member in members]
+        if len(parts) == 1:
+            return parts[0]
+        return " | ".join(parts)
 
     def emit_var_decl(self, node: tuple) -> None:
         if node[0] != "VarDecl":
@@ -224,6 +260,20 @@ class EmitContext:
             for name in id_list:
                 struct_name = self._register_record_var(name, field_list)
                 self.emit_line(f"{struct_name} {name};")
+            return
+        if type_name[0] == "TypeSet":
+            enum_name = type_name[1]
+            c_type = self._set_c_type(enum_name)
+            for name in id_list:
+                self.var_types[name] = c_type
+                self.set_var_enum[name] = enum_name
+                self.emit_line(f"{c_type} {name};")
+            return
+        if type_name[0] == "TypeNamed":
+            enum_name = type_name[1]
+            for name in id_list:
+                self.var_types[name] = enum_name
+                self.emit_line(f"{enum_name} {name};")
             return
         if type_name[0] == "TypeArray":
             low = int(type_name[1][1])
@@ -242,6 +292,10 @@ class EmitContext:
         self.emit_line(f"{c_type} {names};")
 
     def type_to_c(self, type_node: tuple) -> str:
+        if type_node[0] == "TypeNamed":
+            return type_node[1]
+        if type_node[0] == "TypeSet":
+            return self._set_c_type(type_node[1])
         if type_node[0] != "TypeSimple":
             raise NotImplementedEmit(f"typ: {type_node[0]!r}")
         mapping = {
@@ -365,7 +419,12 @@ class EmitContext:
         for expr in node[1] or []:
             self._emit_print_item(expr)
 
+    def _is_set_c_type(self, c_type: str) -> bool:
+        return c_type.startswith("Set_")
+
     def _c_type_scan_format(self, c_type: str) -> str:
+        if self._is_set_c_type(c_type):
+            return "%u"
         if c_type == "double":
             return "%lf"
         if c_type == "char*":
@@ -481,12 +540,37 @@ class EmitContext:
             return f"(({c_type}){self.emit_expr(expr)})"
         if tag == "Field":
             return self.emit_lvalue(node)
+        if tag == "SetLit":
+            return self._emit_set_literal(node[1])
+        if tag == "In":
+            elem = self.emit_expr(node[1])
+            set_e = self.emit_expr(node[2])
+            return f"(({set_e} & (1u << {elem})) != 0)"
         raise NotImplementedEmit(f"wyrazenie: {tag}")
+
+    def _is_set_expr(self, node: tuple) -> bool:
+        if node[0] == "Var":
+            return self._is_set_c_type(self.var_types.get(node[1], ""))
+        if node[0] == "SetLit":
+            return True
+        if node[0] == "BinOp" and node[1] in ("PLUS", "MINUS", "MUL"):
+            return self._is_set_expr(node[2]) or self._is_set_expr(node[3])
+        return False
 
     def emit_binop(self, node: tuple) -> str:
         op, left, right = node[1], node[2], node[3]
         left_e = self.emit_expr(left)
         right_e = self.emit_expr(right)
+        if op == "PLUS" and self._is_set_expr(left) and self._is_set_expr(right):
+            return f"({left_e} | {right_e})"
+        if op == "MUL" and self._is_set_expr(left) and self._is_set_expr(right):
+            return f"({left_e} & {right_e})"
+        if op == "MINUS" and self._is_set_expr(left) and self._is_set_expr(right):
+            return f"({left_e} & ~{right_e})"
+        if op == "LE" and self._is_set_expr(left) and self._is_set_expr(right):
+            return f"(({left_e} & ~{right_e}) == 0)"
+        if op == "GE" and self._is_set_expr(left) and self._is_set_expr(right):
+            return f"(({right_e} & ~{left_e}) == 0)"
         c_ops = {
             "PLUS": "+",
             "MINUS": "-",

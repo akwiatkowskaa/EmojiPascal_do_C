@@ -44,7 +44,11 @@ Ten dokument definiuje zestaw tokenow dla jezyka EmojiPascal. Nazwy wlasne (zmie
 | `OF` | `🧾` | Uzywane w `array ... of ...` oraz `case ... of` |
 | `ARRAY` | `📚` | Typ tablicowy |
 | `RECORD` | `🧱` | Typ rekordowy |
-| `IN` | `📥➡️` | Test przynaleznosci (opcjonalnie) |
+| `TYPE` | `📐` | Sekcja deklaracji typow |
+| `SET` | `🧺` | Typ zbiorowy (`set of`) |
+| `IN` | `📥➡️` | Test przynaleznosci do zbioru |
+| `LBRACKET` | `🗃️` | Lewy nawias zbioru `[` |
+| `RBRACKET` | `🗄️` | Prawy nawias zbioru `]` |
 | `PRINT` | `🖨️` | Wyświetlanie danych na wyjściu |
 | `INPUT` | `📥` | Pobieranie danych od użytkownika |
 
@@ -140,5 +144,6 @@ Zaimplementowane w sciezce `--emit-c` (m.in. `examples/test.ep`):
 3. Procedury i funkcje z parametrami by-value oraz **`BYREF`** (`📤` → wskaznik w C); `return` w funkcji.
 4. Rzutowanie **`CAST`** (`✨` → rzut w C).
 5. Typ **`record`** (`🧱` → `typedef struct { ... }` w C) oraz dostep do pol (`💠` → `zmienna.pole`).
+6. Sekcja **`type`** (`📐`), typy wyliczeniowe **`enum`**, zbiory **`set of`** (`🧺` → maska bitowa w C), literaly `🗃️ ... 🗄️`, operator **`in`** (`📥➡️`).
 
-Poza zakresem (kolejne rozszerzenia): brak — wszystkie tokeny z sekcji 7 wdrozone.
+Pelny przyklad: `examples/demo_rozszerzenia.ep`. Projekt uznany za kompletny w zakresie rozszerzen.

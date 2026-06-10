@@ -36,8 +36,8 @@ def p_program(p):
 
 
 def p_block(p):
-    "block : const_section_opt var_section_opt subprogram_decls_opt compound_stmt"
-    p[0] = ("Block", p[1], p[2], p[3], p[4])
+    "block : const_section_opt type_section_opt var_section_opt subprogram_decls_opt compound_stmt"
+    p[0] = ("Block", p[1], p[2], p[3], p[4], p[5])
 
 
 # --- const ---
@@ -91,6 +91,49 @@ def p_literal_const_bool(p):
 def p_literal_const_char(p):
     "literal_const : LITERAL_CHAR"
     p[0] = ("Char", p[1])
+
+
+def p_literal_const_enum(p):
+    "literal_const : IDENTIFIER"
+    p[0] = ("Var", p[1])
+
+
+# --- type ---
+
+
+def p_type_section_opt_none(p):
+    "type_section_opt : empty"
+    p[0] = []
+
+
+def p_type_section_opt_some(p):
+    "type_section_opt : TYPE type_decl_list"
+    p[0] = p[2]
+
+
+def p_type_decl_list_one(p):
+    "type_decl_list : type_decl"
+    p[0] = [p[1]]
+
+
+def p_type_decl_list_many(p):
+    "type_decl_list : type_decl_list type_decl"
+    p[0] = p[1] + [p[2]]
+
+
+def p_type_decl_enum(p):
+    "type_decl : IDENTIFIER EQ LPAREN enum_id_list RPAREN SEMICOLON"
+    p[0] = ("TypeEnumDecl", p[1], p[4])
+
+
+def p_enum_id_list_one(p):
+    "enum_id_list : IDENTIFIER"
+    p[0] = [p[1]]
+
+
+def p_enum_id_list_many(p):
+    "enum_id_list : enum_id_list COMMA IDENTIFIER"
+    p[0] = p[1] + [p[3]]
 
 
 # --- var ---
@@ -148,6 +191,16 @@ def p_type_name_array(p):
 def p_type_name_record(p):
     "type_name : RECORD BEGIN field_decl_list END"
     p[0] = ("TypeRecord", p[3])
+
+
+def p_type_name_set(p):
+    "type_name : SET OF IDENTIFIER"
+    p[0] = ("TypeSet", p[3])
+
+
+def p_type_name_named(p):
+    "type_name : IDENTIFIER"
+    p[0] = ("TypeNamed", p[1])
 
 
 def p_field_decl_list_one(p):
@@ -484,6 +537,11 @@ def p_bool_not_rel(p):
     p[0] = p[1]
 
 
+def p_relational_in(p):
+    "relational : math_expr IN math_expr"
+    p[0] = ("In", p[1], p[3])
+
+
 def p_relational_cmp(p):
     "relational : math_expr rel_op math_expr"
     p[0] = ("BinOp", p[2], p[1], p[3])
@@ -597,6 +655,31 @@ def p_primary_paren(p):
 def p_primary_cast(p):
     "primary : CAST LPAREN expr RPAREN COLON type_name"
     p[0] = ("Cast", p[3], p[6])
+
+
+def p_primary_set_lit(p):
+    "primary : LBRACKET set_elem_list_opt RBRACKET"
+    p[0] = ("SetLit", p[2] or [])
+
+
+def p_set_elem_list_one(p):
+    "set_elem_list : IDENTIFIER"
+    p[0] = [p[1]]
+
+
+def p_set_elem_list_many(p):
+    "set_elem_list : set_elem_list COMMA IDENTIFIER"
+    p[0] = p[1] + [p[3]]
+
+
+def p_set_elem_list_opt_empty(p):
+    "set_elem_list_opt : empty"
+    p[0] = None
+
+
+def p_set_elem_list_opt_some(p):
+    "set_elem_list_opt : set_elem_list"
+    p[0] = p[1]
 
 
 def p_var_ref_id(p):
