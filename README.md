@@ -258,7 +258,7 @@ Rozszerzenia spoza podstawowego zakresu wdrazamy stopniowo (szczegoly: [`docs/to
 | `real` (`🌊`, `double` w C) | tak |
 | `char` (`🔡`, `char` w C) | tak |
 | rzutowanie `CAST` (`✨`) | tak |
-| parametry `BYREF` (`📤`) | nie |
+| parametry `BYREF` (`📤`) | tak |
 | typ `record` (`🧱`) | nie |
 | dostep do pol rekordu (`💠`) | nie |
 

@@ -13,6 +13,8 @@ class EmitContext:
         self.indent_level = 0
         self.array_bounds: dict[str, tuple[int, int]] = {}
         self.var_types: dict[str, str] = {}
+        self.param_byref: set[str] = set()
+        self.subprogram_param_byref: dict[str, list[bool]] = {}
 
     def emit_line(self, text: str) -> None:
         pad = "    " * self.indent_level
@@ -68,12 +70,25 @@ class EmitContext:
         name, value = node[1], node[2]
         self.emit_line(f"#define {name} {self.emit_expr(value)}")
 
+    def _register_subprogram_sig(self, name: str, params: list) -> None:
+        sig: list[bool] = []
+        for group in params:
+            if group[0] != "Param":
+                raise ValueError(f"Oczekiwano Param, jest {group[0]!r}")
+            byref, ids, _type_name = group[1], group[2], group[3]
+            for _pid in ids:
+                sig.append(byref)
+        self.subprogram_param_byref[name] = sig
+
     def emit_subprogram(self, node: tuple) -> None:
         saved_bounds = self.array_bounds.copy()
         saved_types = self.var_types.copy()
+        saved_byref = self.param_byref.copy()
+        self.param_byref.clear()
         try:
             if node[0] == "Procedure":
                 name, params, inner = node[1], node[2], node[3]
+                self._register_subprogram_sig(name, params)
                 self.emit_line(f"void {name}({self.emit_params(params)}) {{")
                 self.indent()
                 self.emit_inner_block(inner)
@@ -82,6 +97,7 @@ class EmitContext:
                 return
             if node[0] == "Function":
                 name, params, ret_type, inner = node[1], node[2], node[3], node[4]
+                self._register_subprogram_sig(name, params)
                 c_ret = self.type_to_c(ret_type)
                 self.emit_line(f"{c_ret} {name}({self.emit_params(params)}) {{")
                 self.indent()
@@ -93,6 +109,7 @@ class EmitContext:
         finally:
             self.array_bounds = saved_bounds
             self.var_types = saved_types
+            self.param_byref = saved_byref
 
     def emit_params(self, params: list) -> str:
         if not params:
@@ -102,12 +119,14 @@ class EmitContext:
             if group[0] != "Param":
                 raise NotImplementedEmit(f"param: {group[0]!r}")
             byref, ids, type_name = group[1], group[2], group[3]
-            if byref:
-                raise NotImplementedEmit("parametru var (BYREF)")
             c_type = self.type_to_c(type_name)
             for pid in ids:
                 self.var_types[pid] = c_type
-                parts.append(f"{c_type} {pid}")
+                if byref:
+                    self.param_byref.add(pid)
+                    parts.append(f"{c_type} *{pid}")
+                else:
+                    parts.append(f"{c_type} {pid}")
         return ", ".join(parts)
 
     def emit_inner_block(self, node: tuple) -> None:
@@ -240,10 +259,21 @@ class EmitContext:
             raise NotImplementedEmit(f"expr_stmt: {expr[0]!r}")
         self.emit_call(expr)
 
+    def _emit_call_args(self, name: str, args: list) -> str:
+        byref_flags = self.subprogram_param_byref.get(name, [])
+        parts: list[str] = []
+        for i, arg in enumerate(args):
+            if i < len(byref_flags) and byref_flags[i]:
+                if arg[0] != "Var":
+                    raise NotImplementedEmit("BYREF wymaga zmiennej jako argumentu")
+                parts.append(f"&{arg[1]}")
+            else:
+                parts.append(self.emit_expr(arg))
+        return ", ".join(parts)
+
     def emit_call(self, node: tuple) -> None:
         name, args = node[1], node[2] or []
-        args_e = ", ".join(self.emit_expr(a) for a in args)
-        self.emit_line(f"{name}({args_e});")
+        self.emit_line(f"{name}({self._emit_call_args(name, args)});")
 
     def emit_while(self, node: tuple) -> None:
         cond, body = node[1], node[2]
@@ -315,9 +345,14 @@ class EmitContext:
         lhs, rhs = node[1], node[2]
         self.emit_line(f"{self.emit_lvalue(lhs)} = {self.emit_expr(rhs)};")
 
+    def _emit_var_ref(self, name: str) -> str:
+        if name in self.param_byref:
+            return f"(*{name})"
+        return name
+
     def emit_lvalue(self, node: tuple) -> str:
         if node[0] == "Var":
-            return node[1]
+            return self._emit_var_ref(node[1])
         if node[0] == "Index":
             base, index_expr = node[1], node[2]
             if base[0] != "Var":
@@ -336,7 +371,7 @@ class EmitContext:
         if tag == "Char":
             return node[1]
         if tag == "Var":
-            return node[1]
+            return self._emit_var_ref(node[1])
         if tag == "Bool":
             return "1" if node[1] == "true" else "0"
         if tag == "Str":
@@ -347,8 +382,7 @@ class EmitContext:
             return f"(!{self.emit_expr(node[1])})"
         if tag == "Call":
             name, args = node[1], node[2] or []
-            args_e = ", ".join(self.emit_expr(a) for a in args)
-            return f"{name}({args_e})"
+            return f"{name}({self._emit_call_args(name, args)})"
         if tag == "Index":
             return self.emit_lvalue(node)
         if tag == "Cast":

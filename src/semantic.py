@@ -54,6 +54,17 @@ def analyze(ast: tuple) -> None:
 class _Analyzer:
     def __init__(self) -> None:
         self._subprogram_names: set[str] = set()
+        self._subprogram_param_byref: dict[str, list[bool]] = {}
+
+    def _param_byref_sig(self, params: list) -> list[bool]:
+        sig: list[bool] = []
+        for group in params:
+            if group[0] != "Param":
+                raise ValueError(f"Oczekiwano Param, jest {group[0]!r}")
+            byref, ids, _type_name = group[1], group[2], group[3]
+            for _pid in ids:
+                sig.append(byref)
+        return sig
 
     def visit_block(self, node: tuple) -> None:
         if node[0] != "Block":
@@ -106,6 +117,7 @@ class _Analyzer:
             if name in self._subprogram_names:
                 raise SemanticError(f"Podprogram '{name}' zadeklarowany wielokrotnie")
             self._subprogram_names.add(name)
+            self._subprogram_param_byref[name] = self._param_byref_sig(params)
             self._analyze_inner(params, inner)
             return
         if node[0] == "Function":
@@ -113,6 +125,7 @@ class _Analyzer:
             if name in self._subprogram_names:
                 raise SemanticError(f"Podprogram '{name}' zadeklarowany wielokrotnie")
             self._subprogram_names.add(name)
+            self._subprogram_param_byref[name] = self._param_byref_sig(params)
             self._analyze_inner(params, inner)
             return
         raise ValueError(f"Nieznany podprogram: {node[0]!r}")
@@ -206,8 +219,16 @@ class _Analyzer:
         name = node[1]
         if name not in self._subprogram_names:
             raise SemanticError(f"Nieznany podprogram '{name}'")
-        for arg in node[2] or []:
-            self._visit_expr(table, arg)
+        byref_flags = self._subprogram_param_byref.get(name, [])
+        for i, arg in enumerate(node[2] or []):
+            if i < len(byref_flags) and byref_flags[i]:
+                if arg[0] != "Var":
+                    raise SemanticError(
+                        f"Argument BYREF podprogramu '{name}' musi byc zmienna"
+                    )
+                table.lookup(arg[1])
+            else:
+                self._visit_expr(table, arg)
 
     def _visit_expr(self, table: SymbolTable, node: tuple) -> None:
         tag = node[0]

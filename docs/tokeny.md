@@ -137,11 +137,10 @@ Zaimplementowane w sciezce `--emit-c` (m.in. `examples/test.ep`):
 
 1. Deklaracje `const` / `var`, przypisanie, wyrazenia arytmetyczne i relacyjne, `if`, `while`, `for`, `repeat`/`until`, `case`.
 2. Typy: `int`, `bool` (jako `int` w C), `string` (parametry / `printf` `%s`), tablice `array[low..high]`, **`real`** (`🌊` → `double`), **`char`** (`🔡` → `char`).
-3. Procedury i funkcje z parametrami by-value; `return` w funkcji.
+3. Procedury i funkcje z parametrami by-value oraz **`BYREF`** (`📤` → wskaznik w C); `return` w funkcji.
 4. Rzutowanie **`CAST`** (`✨` → rzut w C).
 
 Poza zakresem (kolejne rozszerzenia):
 
 - typ `record` (`🧱`) — token w lexerze, brak reguly w parserze;
-- parametry `BYREF` (`📤`);
 - pelny dostep do pol rekordu (`💠`) w wyrazeniach.

@@ -59,6 +59,39 @@ class TestEmitIntegration(unittest.TestCase):
         self.assertEqual(run.returncode, 0, run.stderr)
         self.assertIn("Koniec testu", run.stdout)
 
+    def test_byref_param(self) -> None:
+        ep = """🏁 ByrefTest 🔹
+
+📦
+    x 📍 🔢 🔹
+
+🔧 Podwoj 🤜 📤 n 📍 🔢 🤛 🔹
+🚦
+    n ⬅️ n ✖️ 2️⃣ 🔹
+🛑 🔹
+
+🚦
+    x ⬅️ 5️⃣ 🔹
+    Podwoj 🤜 x 🤛 🔹
+    🖨️ 🤜 x 🤛 🔹
+🛑 🔚
+"""
+        out_dir = Path(tempfile.mkdtemp(prefix="emojipascal_byref_"))
+        self.addCleanup(lambda: shutil.rmtree(out_dir, ignore_errors=True))
+        ep_path = out_dir / "byref.ep"
+        ep_path.write_text(ep, encoding="utf-8")
+        c_path = out_dir / "byref.c"
+        emit = _run(
+            [sys.executable, "src/main.py", "--emit-c", str(c_path), str(ep_path)]
+        )
+        self.assertEqual(emit.returncode, 0, emit.stderr or emit.stdout)
+        binary = out_dir / "byref_bin"
+        build = _run(["gcc", "-Wall", "-o", str(binary), str(c_path)])
+        self.assertEqual(build.returncode, 0, build.stderr)
+        run = _run([str(binary)])
+        self.assertEqual(run.returncode, 0, run.stderr)
+        self.assertIn("10", run.stdout)
+
     def test_emit_contains_expected_fragments(self) -> None:
         _run([sys.executable, "src/main.py", "--emit-c", "examples/suma_do_n.ep"])
         c_src = (ROOT / "output" / "c" / "suma_do_n.c").read_text(encoding="utf-8")
