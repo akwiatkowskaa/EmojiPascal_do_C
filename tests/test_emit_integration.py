@@ -92,6 +92,38 @@ class TestEmitIntegration(unittest.TestCase):
         self.assertEqual(run.returncode, 0, run.stderr)
         self.assertIn("10", run.stdout)
 
+    def test_record_fields(self) -> None:
+        ep = """🏁 RecordTest 🔹
+📦
+    osoba 📍 🧱 🚦
+        wiek 📍 🔢 🔹
+        pkt 📍 🔢 🔹
+    🛑 🔹
+🚦
+    osoba 💠 wiek ⬅️ 2️⃣0️⃣ 🔹
+    osoba 💠 pkt ⬅️ 1️⃣0️⃣0️⃣ 🔹
+    🖨️ 🤜 osoba 💠 wiek 🤛 🔹
+🛑 🔚
+"""
+        out_dir = Path(tempfile.mkdtemp(prefix="emojipascal_record_"))
+        self.addCleanup(lambda: shutil.rmtree(out_dir, ignore_errors=True))
+        ep_path = out_dir / "record.ep"
+        ep_path.write_text(ep, encoding="utf-8")
+        c_path = out_dir / "record.c"
+        emit = _run(
+            [sys.executable, "src/main.py", "--emit-c", str(c_path), str(ep_path)]
+        )
+        self.assertEqual(emit.returncode, 0, emit.stderr or emit.stdout)
+        c_src = c_path.read_text(encoding="utf-8")
+        self.assertIn("typedef struct", c_src)
+        self.assertIn("osoba.wiek", c_src)
+        binary = out_dir / "record_bin"
+        build = _run(["gcc", "-Wall", "-o", str(binary), str(c_path)])
+        self.assertEqual(build.returncode, 0, build.stderr)
+        run = _run([str(binary)])
+        self.assertEqual(run.returncode, 0, run.stderr)
+        self.assertIn("20", run.stdout)
+
     def test_emit_contains_expected_fragments(self) -> None:
         _run([sys.executable, "src/main.py", "--emit-c", "examples/suma_do_n.ep"])
         c_src = (ROOT / "output" / "c" / "suma_do_n.c").read_text(encoding="utf-8")

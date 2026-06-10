@@ -145,6 +145,26 @@ def p_type_name_array(p):
     p[0] = ("TypeArray", p[3], p[5], p[8])
 
 
+def p_type_name_record(p):
+    "type_name : RECORD BEGIN field_decl_list END"
+    p[0] = ("TypeRecord", p[3])
+
+
+def p_field_decl_list_one(p):
+    "field_decl_list : field_decl"
+    p[0] = [p[1]]
+
+
+def p_field_decl_list_many(p):
+    "field_decl_list : field_decl_list field_decl"
+    p[0] = p[1] + [p[2]]
+
+
+def p_field_decl(p):
+    "field_decl : id_list COLON type_name SEMICOLON"
+    p[0] = ("RecordField", p[1], p[3])
+
+
 def p_type_base(p):
     """type_base : TYPE_INT
     | TYPE_REAL

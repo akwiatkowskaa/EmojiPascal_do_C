@@ -139,8 +139,6 @@ Zaimplementowane w sciezce `--emit-c` (m.in. `examples/test.ep`):
 2. Typy: `int`, `bool` (jako `int` w C), `string` (parametry / `printf` `%s`), tablice `array[low..high]`, **`real`** (`🌊` → `double`), **`char`** (`🔡` → `char`).
 3. Procedury i funkcje z parametrami by-value oraz **`BYREF`** (`📤` → wskaznik w C); `return` w funkcji.
 4. Rzutowanie **`CAST`** (`✨` → rzut w C).
+5. Typ **`record`** (`🧱` → `typedef struct { ... }` w C) oraz dostep do pol (`💠` → `zmienna.pole`).
 
-Poza zakresem (kolejne rozszerzenia):
-
-- typ `record` (`🧱`) — token w lexerze, brak reguly w parserze;
-- pelny dostep do pol rekordu (`💠`) w wyrazeniach.
+Poza zakresem (kolejne rozszerzenia): brak — wszystkie tokeny z sekcji 7 wdrozone.

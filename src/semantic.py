@@ -41,7 +41,31 @@ def _type_token(type_node: tuple) -> str:
         return type_node[1]
     if type_node[0] == "TypeArray":
         return "TYPE_ARRAY"
+    if type_node[0] == "TypeRecord":
+        return "TYPE_RECORD"
     raise SemanticError(f"Nieobslugiwany typ: {type_node[0]!r}")
+
+
+def _record_field_map(type_node: tuple) -> dict[str, str]:
+    if type_node[0] != "TypeRecord":
+        raise ValueError(f"Oczekiwano TypeRecord, jest {type_node[0]!r}")
+    fields: dict[str, str] = {}
+    for field in type_node[1]:
+        if field[0] != "RecordField":
+            raise ValueError(f"Oczekiwano RecordField, jest {field[0]!r}")
+        ids, ftype = field[1], field[2]
+        if ftype[0] != "TypeSimple":
+            raise SemanticError(
+                f"Pole rekordu: nieobslugiwany typ {ftype[0]!r}"
+            )
+        type_token = ftype[1]
+        for fid in ids:
+            if fid in fields:
+                raise SemanticError(
+                    f"Pole '{fid}' zadeklarowane wielokrotnie w rekordzie"
+                )
+            fields[fid] = type_token
+    return fields
 
 
 def analyze(ast: tuple) -> None:
@@ -55,6 +79,7 @@ class _Analyzer:
     def __init__(self) -> None:
         self._subprogram_names: set[str] = set()
         self._subprogram_param_byref: dict[str, list[bool]] = {}
+        self._record_fields: dict[str, dict[str, str]] = {}
 
     def _param_byref_sig(self, params: list) -> list[bool]:
         sig: list[bool] = []
@@ -108,8 +133,15 @@ class _Analyzer:
             raise ValueError(f"Oczekiwano VarDecl, jest {node[0]!r}")
         id_list, type_name = node[1], node[2]
         type_token = _type_token(type_name)
+        field_map = (
+            _record_field_map(type_name)
+            if type_name[0] == "TypeRecord"
+            else None
+        )
         for name in id_list:
             table.declare(name, type_token)
+            if field_map is not None:
+                self._record_fields[name] = dict(field_map)
 
     def _register_subprogram(self, node: tuple) -> None:
         if node[0] == "Procedure":
@@ -207,6 +239,19 @@ class _Analyzer:
     def _visit_lvalue(self, table: SymbolTable, node: tuple) -> None:
         if node[0] == "Var":
             table.lookup(node[1])
+        elif node[0] == "Field":
+            base, field = node[1], node[2]
+            if base[0] != "Var":
+                raise SemanticError("Dostep do pola tylko przez zmienna rekordowa")
+            var = base[1]
+            if table.lookup(var) != "TYPE_RECORD":
+                raise SemanticError(
+                    f"Zmienna '{var}' nie jest rekordem (dostep do pola '{field}')"
+                )
+            if field not in self._record_fields.get(var, {}):
+                raise SemanticError(
+                    f"Rekord '{var}' nie ma pola '{field}'"
+                )
         elif node[0] == "Index":
             self._visit_lvalue(table, node[1])
             self._visit_expr(table, node[2])
@@ -245,6 +290,8 @@ class _Analyzer:
             self._visit_lvalue(table, node)
         elif tag == "Cast":
             self._visit_expr(table, node[1])
+        elif tag == "Field":
+            self._visit_lvalue(table, node)
         elif tag in ("Int", "Real", "Str", "Bool", "Char"):
             pass
         else:

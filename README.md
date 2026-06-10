@@ -259,8 +259,8 @@ Rozszerzenia spoza podstawowego zakresu wdrazamy stopniowo (szczegoly: [`docs/to
 | `char` (`🔡`, `char` w C) | tak |
 | rzutowanie `CAST` (`✨`) | tak |
 | parametry `BYREF` (`📤`) | tak |
-| typ `record` (`🧱`) | nie |
-| dostep do pol rekordu (`💠`) | nie |
+| typ `record` (`🧱`, `typedef struct` w C) | tak |
+| dostep do pol rekordu (`💠`, `var.pole`) | tak |
 
 ---
 

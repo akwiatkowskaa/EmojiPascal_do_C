@@ -15,6 +15,8 @@ class EmitContext:
         self.var_types: dict[str, str] = {}
         self.param_byref: set[str] = set()
         self.subprogram_param_byref: dict[str, list[bool]] = {}
+        self.record_field_types: dict[str, dict[str, str]] = {}
+        self._record_typedef_cache: dict[tuple[tuple[str, str], ...], str] = {}
 
     def emit_line(self, text: str) -> None:
         pad = "    " * self.indent_level
@@ -36,6 +38,11 @@ class EmitContext:
         self.emit_line("#include <stdio.h>")
         self.emit_line("")
         self.emit_line(f"/* Program: {program_name} */")
+
+        for typedef_line in self._collect_record_typedefs(block):
+            self.emit_line(typedef_line)
+        if self._record_typedef_cache:
+            self.emit_line("")
 
         const_section, var_section, subprograms, compound = (
             block[1],
@@ -143,10 +150,81 @@ class EmitContext:
         self.array_bounds = saved_bounds
         self.var_types = saved_types
 
+    def _record_struct_key(self, field_list: list) -> tuple[tuple[str, str], ...]:
+        parts: list[tuple[str, str]] = []
+        for field in field_list:
+            if field[0] != "RecordField":
+                raise ValueError(f"Oczekiwano RecordField, jest {field[0]!r}")
+            ids, type_node = field[1], field[2]
+            c_type = self._field_type_to_c(type_node)
+            for fid in ids:
+                parts.append((fid, c_type))
+        return tuple(parts)
+
+    def _field_type_to_c(self, type_node: tuple) -> str:
+        if type_node[0] == "TypeSimple":
+            return self.type_to_c(type_node)
+        raise NotImplementedEmit(f"pole rekordu: {type_node[0]!r}")
+
+    def _record_typedef_name(self, field_list: list) -> str:
+        key = self._record_struct_key(field_list)
+        if key in self._record_typedef_cache:
+            return self._record_typedef_cache[key]
+        name = f"Record_{len(self._record_typedef_cache) + 1}"
+        self._record_typedef_cache[key] = name
+        return name
+
+    def _record_typedef_line(self, field_list: list) -> str:
+        name = self._record_typedef_name(field_list)
+        key = self._record_struct_key(field_list)
+        if getattr(self, "_emitted_typedef_keys", None) is None:
+            self._emitted_typedef_keys: set[tuple[tuple[str, str], ...]] = set()
+        if key in self._emitted_typedef_keys:
+            return ""
+        self._emitted_typedef_keys.add(key)
+        body = "\n".join(f"    {c_type} {fname};" for fname, c_type in key)
+        return f"typedef struct {{\n{body}\n}} {name};"
+
+    def _register_record_var(self, var_name: str, field_list: list) -> str:
+        struct_name = self._record_typedef_name(field_list)
+        fields: dict[str, str] = {}
+        for fname, c_type in self._record_struct_key(field_list):
+            fields[fname] = c_type
+        self.record_field_types[var_name] = fields
+        self.var_types[var_name] = struct_name
+        return struct_name
+
+    def _collect_record_typedefs(self, block: tuple) -> list[str]:
+        lines: list[str] = []
+        self._emitted_typedef_keys = set()
+
+        def add_from_var_section(var_section: list) -> None:
+            for decl in var_section:
+                if decl[0] != "VarDecl":
+                    continue
+                type_name = decl[2]
+                if type_name[0] != "TypeRecord":
+                    continue
+                line = self._record_typedef_line(type_name[1])
+                if line:
+                    lines.append(line)
+
+        add_from_var_section(block[2])
+        for sub in block[3]:
+            inner = sub[3] if sub[0] == "Procedure" else sub[4]
+            add_from_var_section(inner[1])
+        return lines
+
     def emit_var_decl(self, node: tuple) -> None:
         if node[0] != "VarDecl":
             raise ValueError(f"Oczekiwano VarDecl, jest {node[0]!r}")
         id_list, type_name = node[1], node[2]
+        if type_name[0] == "TypeRecord":
+            field_list = type_name[1]
+            for name in id_list:
+                struct_name = self._register_record_var(name, field_list)
+                self.emit_line(f"{struct_name} {name};")
+            return
         if type_name[0] == "TypeArray":
             low = int(type_name[1][1])
             high = int(type_name[2][1])
@@ -287,17 +365,26 @@ class EmitContext:
         for expr in node[1] or []:
             self._emit_print_item(expr)
 
+    def _c_type_scan_format(self, c_type: str) -> str:
+        if c_type == "double":
+            return "%lf"
+        if c_type == "char*":
+            return "%s"
+        if c_type == "char":
+            return "%c"
+        return "%d"
+
     def _scan_format(self, expr: tuple) -> str:
         """Format scanf/printf dla typu wyrażenia."""
         if expr[0] == "Var":
-            c_type = self.var_types.get(expr[1], "int")
-            if c_type == "double":
-                return "%lf"
-            if c_type == "char*":
-                return "%s"
-            if c_type == "char":
-                return "%c"
-            return "%d"
+            return self._c_type_scan_format(self.var_types.get(expr[1], "int"))
+        if expr[0] == "Field":
+            base, field = expr[1], expr[2]
+            if base[0] != "Var":
+                return "%d"
+            var = base[1]
+            c_type = self.record_field_types.get(var, {}).get(field, "int")
+            return self._c_type_scan_format(c_type)
         if expr[0] == "Real":
             return "%lf"
         if expr[0] == "Char":
@@ -317,10 +404,10 @@ class EmitContext:
 
     def emit_input(self, node: tuple) -> None:
         target = node[1]
-        if target[0] != "Var":
+        if target[0] not in ("Var", "Field"):
             raise NotImplementedEmit(f"input: {target[0]!r}")
         fmt = self._scan_format(target)
-        self.emit_line(f'scanf("{fmt}", &{target[1]});')
+        self.emit_line(f'scanf("{fmt}", &{self.emit_lvalue(target)});')
 
     def emit_for(self, node: tuple) -> None:
         loop_var, start, end, direction, body = node[1], node[2], node[3], node[4], node[5]
@@ -353,6 +440,9 @@ class EmitContext:
     def emit_lvalue(self, node: tuple) -> str:
         if node[0] == "Var":
             return self._emit_var_ref(node[1])
+        if node[0] == "Field":
+            base, field = node[1], node[2]
+            return f"{self.emit_lvalue(base)}.{field}"
         if node[0] == "Index":
             base, index_expr = node[1], node[2]
             if base[0] != "Var":
@@ -389,6 +479,8 @@ class EmitContext:
             expr, type_name = node[1], node[2]
             c_type = self.type_to_c(type_name)
             return f"(({c_type}){self.emit_expr(expr)})"
+        if tag == "Field":
+            return self.emit_lvalue(node)
         raise NotImplementedEmit(f"wyrazenie: {tag}")
 
     def emit_binop(self, node: tuple) -> str:
