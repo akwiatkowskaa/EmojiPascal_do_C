@@ -249,6 +249,21 @@ def p_for_stmt_to(p):
 
 ---
 
+## Stan rozszerzeń transpilera
+
+Rozszerzenia spoza podstawowego zakresu wdrazamy stopniowo (szczegoly: [`docs/tokeny.md`](./docs/tokeny.md), sekcja 7).
+
+| Konstrukcja | Status |
+|:---|:---:|
+| `real` (`🌊`, `double` w C) | tak |
+| `char` (`🔡`, `char` w C) | tak |
+| rzutowanie `CAST` (`✨`) | tak |
+| parametry `BYREF` (`📤`) | nie |
+| typ `record` (`🧱`) | nie |
+| dostep do pol rekordu (`💠`) | nie |
+
+---
+
 ## Informacje o stosowanych generatorach skanerów/parserów, pakietach zewnętrznych
 
 - Generator skanera/parsera: **PLY (Python Lex-Yacc)**

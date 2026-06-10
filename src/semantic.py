@@ -222,6 +222,8 @@ class _Analyzer:
             self._visit_call(table, node)
         elif tag == "Index":
             self._visit_lvalue(table, node)
+        elif tag == "Cast":
+            self._visit_expr(table, node[1])
         elif tag in ("Int", "Real", "Str", "Bool", "Char"):
             pass
         else:

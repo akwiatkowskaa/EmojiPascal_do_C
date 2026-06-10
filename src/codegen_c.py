@@ -151,6 +151,8 @@ class EmitContext:
             "TYPE_INT": "int",
             "TYPE_BOOL": "int",
             "TYPE_STRING": "char*",
+            "TYPE_REAL": "double",
+            "TYPE_CHAR": "char",
         }
         token = type_node[1]
         if token not in mapping:
@@ -255,24 +257,40 @@ class EmitContext:
         for expr in node[1] or []:
             self._emit_print_item(expr)
 
+    def _scan_format(self, expr: tuple) -> str:
+        """Format scanf/printf dla typu wyrażenia."""
+        if expr[0] == "Var":
+            c_type = self.var_types.get(expr[1], "int")
+            if c_type == "double":
+                return "%lf"
+            if c_type == "char*":
+                return "%s"
+            if c_type == "char":
+                return "%c"
+            return "%d"
+        if expr[0] == "Real":
+            return "%lf"
+        if expr[0] == "Char":
+            return "%c"
+        return "%d"
+
     def _emit_print_item(self, expr: tuple) -> None:
         tag = expr[0]
         if tag == "Str":
             self.emit_line(f"printf({expr[1]});")
             return
-        if tag == "Var" and self.var_types.get(expr[1]) == "char*":
-            self.emit_line(f'printf("%s\\n", {expr[1]});')
-            return
-        if tag in ("Int", "Var", "Bool", "BinOp", "UnaryNot"):
-            self.emit_line(f'printf("%d\\n", {self.emit_expr(expr)});')
-            return
-        raise NotImplementedEmit(f"print arg: {tag}")
+        fmt = self._scan_format(expr)
+        if fmt == "%s":
+            self.emit_line(f'printf("%s\\n", {self.emit_expr(expr)});')
+        else:
+            self.emit_line(f'printf("{fmt}\\n", {self.emit_expr(expr)});')
 
     def emit_input(self, node: tuple) -> None:
         target = node[1]
         if target[0] != "Var":
             raise NotImplementedEmit(f"input: {target[0]!r}")
-        self.emit_line(f'scanf("%d", &{target[1]});')
+        fmt = self._scan_format(target)
+        self.emit_line(f'scanf("{fmt}", &{target[1]});')
 
     def emit_for(self, node: tuple) -> None:
         loop_var, start, end, direction, body = node[1], node[2], node[3], node[4], node[5]
@@ -313,6 +331,10 @@ class EmitContext:
         tag = node[0]
         if tag == "Int":
             return str(node[1])
+        if tag == "Real":
+            return str(node[1])
+        if tag == "Char":
+            return node[1]
         if tag == "Var":
             return node[1]
         if tag == "Bool":
@@ -329,6 +351,10 @@ class EmitContext:
             return f"{name}({args_e})"
         if tag == "Index":
             return self.emit_lvalue(node)
+        if tag == "Cast":
+            expr, type_name = node[1], node[2]
+            c_type = self.type_to_c(type_name)
+            return f"(({c_type}){self.emit_expr(expr)})"
         raise NotImplementedEmit(f"wyrazenie: {tag}")
 
     def emit_binop(self, node: tuple) -> str:
